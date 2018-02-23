@@ -167,7 +167,7 @@ int main(int argc, char** argv) {
     bench = 1;
   } else {
     const char* colon;
-    const char* endptr;
+    char* endptr;
 
     colon = strchr(argv[1], ':');
     if (colon == NULL)
