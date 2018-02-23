@@ -47,7 +47,7 @@ int llparse__print_span(const char* name, const char* p, const char* endp) {
   return 0;
 }
 
-static int run_bench(const char* input, int len) {
+static int llparse__run_bench(const char* input, int len) {
   llparse_state_t s;
   int64_t i;
   struct timeval start;
@@ -83,7 +83,7 @@ static int run_bench(const char* input, int len) {
 }
 
 
-static int run_scan(int scan, const char* input, int len) {
+static int llparse__run_scan(int scan, const char* input, int len) {
   llparse_state_t s;
   llparse_init(&s);
 
@@ -112,8 +112,38 @@ static int run_scan(int scan, const char* input, int len) {
 }
 
 
+static int llparse__run_stdin() {
+  llparse_state_t s;
+
+  llparse_init(&s);
+
+  for (;;) {
+    char buf[16384];
+    const char* input;
+    const char* endp;
+    int code;
+
+    input = fgets(buf, sizeof(buf), stdin);
+    if (input == NULL)
+      break;
+
+    endp = input + strlen(input);
+    code = llparse_execute(&s, input, endp);
+    if (code != 0) {
+      fprintf(stderr, "code=%d error=%d reason=%s\n", code, s.error, s.reason);
+      return -1;
+    }
+  }
+
+  return 0;
+}
+
+
 static int llparse__print_usage(char** argv) {
-  fprintf(stderr, "%s [bench | <from>:<to>] [input]\n", argv[0]);
+  fprintf(stderr, "Usage:\n");
+  fprintf(stderr, "  %s <from>:to [input]\n", argv[0]);
+  fprintf(stderr, "  %s bench [input]\n", argv[0]);
+  fprintf(stderr, "  %s -\n", argv[0]);
   return -1;
 }
 
@@ -126,6 +156,9 @@ int main(int argc, char** argv) {
     int to;
   } scan;
   int i;
+
+  if (argc >= 2 && strcmp(argv[1], "-") == 0)
+    return llparse__run_stdin();
 
   if (argc < 3)
     return llparse__print_usage(argv);
@@ -160,13 +193,13 @@ int main(int argc, char** argv) {
   start = input;
 
   if (bench)
-    return run_bench(input, len);
+    return llparse__run_bench(input, len);
 
   for (i = scan.from; i < scan.to; i++) {
     int err;
 
     fprintf(stdout, "===== SCAN %d START =====\n", i);
-    err = run_scan(i, input, len);
+    err = llparse__run_scan(i, input, len);
     if (err != 0)
       return err;
   }
