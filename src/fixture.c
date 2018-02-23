@@ -12,7 +12,7 @@
 /* 8 gb */
 static const int64_t kBytes = 8589934592LL;
 
-static int bench;
+int llparse__in_bench;
 static const char* start;
 
 void llparse__print(const char* p, const char* endp,
@@ -21,7 +21,7 @@ void llparse__print(const char* p, const char* endp,
   char buf[16384];
   int len;
 
-  if (bench)
+  if (llparse__in_bench)
     return;
 
   va_start(ap, fmt);
@@ -38,13 +38,6 @@ void llparse__print(const char* p, const char* endp,
 void llparse__debug(llparse_state_t* s, const char* p, const char* endp,
                     const char* msg) {
   fprintf(stderr, "off=%d debug=%s\n", (int) (p - start), msg);
-}
-
-
-int llparse__print_span(const char* name, const char* p, const char* endp) {
-  llparse__print(p, endp, "len=%d span[%s]=\"%.*s\"",
-                 (int) (endp - p), name, (int) (endp - p), p);
-  return 0;
 }
 
 static int llparse__run_bench(const char* input, int len) {
@@ -128,6 +121,7 @@ static int llparse__run_stdin() {
       break;
 
     endp = input + strlen(input);
+    start = input;
     code = llparse_execute(&s, input, endp);
     if (code != 0) {
       fprintf(stderr, "code=%d error=%d reason=%s\n", code, s.error, s.reason);
@@ -164,7 +158,7 @@ int main(int argc, char** argv) {
     return llparse__print_usage(argv);
 
   if (strcmp(argv[1], "bench") == 0) {
-    bench = 1;
+    llparse__in_bench = 1;
   } else {
     const char* colon;
     char* endptr;
@@ -185,14 +179,14 @@ int main(int argc, char** argv) {
   input = argv[2];
   len = strlen(input);
 
-  if (bench && len == 0) {
+  if (llparse__in_bench && len == 0) {
     fprintf(stderr, "Input can\'t be empty for benchmark");
     return -1;
   }
 
   start = input;
 
-  if (bench)
+  if (llparse__in_bench)
     return llparse__run_bench(input, len);
 
   for (i = scan.from; i < scan.to; i++) {
