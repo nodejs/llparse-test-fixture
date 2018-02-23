@@ -11,7 +11,9 @@ const Fixture = require('../');
 const TMP_DIR = path.join(__dirname, 'tmp');
 const EXTRA_CODE = path.join(__dirname, 'fixtures', 'extra.c');
 
-describe('llparse-test-fixture', () => {
+describe('llparse-test-fixture', function() {
+  this.timeout(10000);
+
   let fixture;
   let p;
 
