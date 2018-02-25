@@ -28,7 +28,7 @@
   "homepage": "https://github.com/indutny/llparse-test-fixture#readme",
   "devDependencies": {
     "eslint": "^4.18.1",
-    "llparse": "^2.0.0-beta11",
+    "llparse": "^2.0.0",
     "mocha": "^5.0.1"
   },
   "dependencies": {
