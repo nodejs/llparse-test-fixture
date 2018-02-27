@@ -85,4 +85,21 @@ describe('llparse-test-fixture', function() {
       'off=3 error code=1 reason="some reason"\n',
       callback);
   });
+
+  it('should check against regexp', (callback) => {
+    const start = p.node('start');
+
+    start
+      .match('a', start)
+      .otherwise(p.error(1, 'some reason'));
+
+    const build = fixture.build(p, start, 'error', {
+      extra: [ EXTRA_CODE ]
+    });
+
+    build(
+      'aaab',
+      /off=\d+ error code=1 reason="some reason"/g,
+      callback);
+  });
 });
