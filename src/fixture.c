@@ -40,6 +40,50 @@ void llparse__debug(llparse_state_t* s, const char* p, const char* endp,
   fprintf(stderr, "off=%d debug=%s\n", (int) (p - start), msg);
 }
 
+
+static int llparse__run_one(llparse_state_t* s, const char* input, int len) {
+  int code;
+  const char* p;
+  const char* endp;
+  unsigned int paused;
+
+  p = input;
+  endp = input + len;
+
+  paused = 0;
+  for (;;) {
+    code = llparse_execute(s, input, endp);
+
+    if (code != LLPARSE__ERROR_PAUSE)
+      break;
+
+    if (paused && input == s->error_pos) {
+      llparse__debug(s, input, endp, "Can\'t make progress after pause");
+      return -1;
+    }
+
+    llparse__print(s->error_pos, endp, "pause");
+
+    /* Resume */
+    input = s->error_pos;
+    paused = 1;
+  }
+
+  if (code != 0) {
+    if (code != s->error) {
+      llparse__print(s->error_pos, endp,
+                     "error code mismatch got=%d expected=%d", code, s->error);
+      return -1;
+    }
+
+    llparse__print(s->error_pos, endp, "error code=%d reason=\"%s\"", code,
+                   s->reason);
+  }
+
+  return code;
+}
+
+
 static int llparse__run_bench(const char* input, int len) {
   llparse_state_t s;
   int64_t i;
@@ -57,7 +101,7 @@ static int llparse__run_bench(const char* input, int len) {
   for (i = 0; i < iterations; i++) {
     int code;
 
-    code = llparse_execute(&s, input, input + len);
+    code = llparse__run_one(&s, input, len);
     if (code != 0)
       return code;
   }
@@ -91,11 +135,11 @@ static int llparse__run_scan(int scan, const char* input, int len) {
 
     max = len > scan ? scan : len;
 
-    code = llparse_execute(&s, input, input + max);
-    if (code != 0) {
-      fprintf(stderr, "code=%d error=%d reason=%s\n", code, s.error, s.reason);
-      return -1;
-    }
+    code = llparse__run_one(&s, input, max);
+
+    /* Continue with next scan */
+    if (code != 0)
+      return 0;
 
     input += max;
     len -= max;
@@ -113,16 +157,13 @@ static int llparse__run_stdin() {
   for (;;) {
     char buf[16384];
     const char* input;
-    const char* endp;
     int code;
 
     input = fgets(buf, sizeof(buf), stdin);
     if (input == NULL)
       break;
 
-    endp = input + strlen(input);
-    start = input;
-    code = llparse_execute(&s, input, endp);
+    code = llparse__run_one(&s, input, strlen(input));
     if (code != 0) {
       fprintf(stderr, "code=%d error=%d reason=%s\n", code, s.error, s.reason);
       return -1;

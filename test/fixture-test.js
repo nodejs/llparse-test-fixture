@@ -68,4 +68,21 @@ describe('llparse-test-fixture', function() {
         'off=6 len=2 span[span]="bb"\n',
       callback);
   });
+
+  it('should print errors', (callback) => {
+    const start = p.node('start');
+
+    start
+      .match('a', start)
+      .otherwise(p.error(1, 'some reason'));
+
+    const build = fixture.build(p, start, 'error', {
+      extra: [ EXTRA_CODE ]
+    });
+
+    build(
+      'aaab',
+      'off=3 error code=1 reason="some reason"\n',
+      callback);
+  });
 });
