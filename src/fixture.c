@@ -163,6 +163,7 @@ static int llparse__run_stdin() {
     if (input == NULL)
       break;
 
+    start = input;
     code = llparse__run_one(&s, input, strlen(input));
     if (code != 0) {
       fprintf(stderr, "code=%d error=%d reason=%s\n", code, s.error, s.reason);
