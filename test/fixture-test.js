@@ -102,4 +102,23 @@ describe('llparse-test-fixture', function() {
       /off=\d+ error code=1 reason="some reason"/g,
       callback);
   });
+
+  it('should check against array of mixed strings/regexps', (callback) => {
+    const start = p.node('start');
+    const invoke = p.invoke(p.code.match('llparse__print_off'));
+
+    start
+      .skipTo(invoke.otherwise(start));
+
+    const build = fixture.build(p, start, 'mixed', {
+      extra: [ EXTRA_CODE ]
+    });
+
+    build('aaab', [
+      'off=1',
+      'off=2',
+      /off=\d/,
+      'off=4'
+    ], callback);
+  });
 });
