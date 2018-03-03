@@ -1,6 +1,6 @@
 {
   "name": "llparse-test-fixture",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "description": "A test fixture for llparse (and llparse-based modules)",
   "main": "lib/fixture.js",
   "scripts": {
