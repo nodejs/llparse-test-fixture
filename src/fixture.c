@@ -10,7 +10,7 @@
 /* NOTE: include of parser is inserted through `-include` clang argument */
 
 /* 8 gb */
-static const int64_t kBytes = 8589934592LL;
+static const int64_t kBytes = 8LL << 30;
 
 int llparse__in_bench;
 static const char* start;
@@ -91,6 +91,7 @@ static int llparse__run_bench(const char* input, int len) {
   struct timeval end;
   double bw;
   double time;
+  double total;
   int64_t iterations;
 
   llparse_init(&s);
@@ -109,10 +110,11 @@ static int llparse__run_bench(const char* input, int len) {
 
   time = (end.tv_sec - start.tv_sec);
   time += (double) (end.tv_usec - start.tv_usec) * 1e-6;
-  bw = (double) kBytes / time;
+  total = (double) iterations * len;
+  bw = (double) total / time;
 
   fprintf(stdout, "%.2f mb | %.2f mb/s | %.2f s\n",
-      (double) kBytes / (1024 * 1024),
+      (double) total / (1024 * 1024),
       bw / (1024 * 1024),
       time);
 
