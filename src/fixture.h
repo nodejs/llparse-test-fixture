@@ -1,7 +1,9 @@
 #ifndef SRC_LLPARSE_FIXTURE_H_
 #define SRC_LLPARSE_FIXTURE_H_
 
-#define LLPARSE__ERROR_PAUSE 0x7fa73caa
+#ifndef LLPARSE__ERROR_PAUSE
+# define LLPARSE__ERROR_PAUSE 0x7fa73caa
+#endif  /* LLPARSE__ERROR_PAUSE */
 
 int llparse__in_bench;
 
