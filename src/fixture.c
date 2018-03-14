@@ -37,7 +37,12 @@ void llparse__print(const char* p, const char* endp,
 
 void llparse__debug(llparse_state_t* s, const char* p, const char* endp,
                     const char* msg) {
-  fprintf(stderr, "off=%d debug=%s\n", (int) (p - start), msg);
+  if (p == endp) {
+    fprintf(stderr, "off=%-3d next=null debug=%s\n", (int) (p - start), msg);
+  } else {
+    fprintf(stderr, "off=%-3d next=%02x   debug=%s\n", (int) (p - start), *p,
+            msg);
+  }
 }
 
 
