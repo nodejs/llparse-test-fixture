@@ -118,9 +118,10 @@ static int llparse__run_bench(const char* input, int len) {
   total = (double) iterations * len;
   bw = (double) total / time;
 
-  fprintf(stdout, "%.2f mb | %.2f mb/s | %.2f s\n",
+  fprintf(stdout, "%.2f mb | %.2f mb/s | %.2f ops/sec | %.2f s\n",
       (double) total / (1024 * 1024),
       bw / (1024 * 1024),
+      (double) iterations / time,
       time);
 
   return 0;
