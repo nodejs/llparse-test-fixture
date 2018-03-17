@@ -3,6 +3,7 @@
   "version": "1.6.0",
   "description": "A test fixture for llparse (and llparse-based modules)",
   "main": "lib/fixture.js",
+  "types": "lib/fixture.d.ts",
   "scripts": {
     "build": "tsc",
     "clean": "rm -rf lib",
