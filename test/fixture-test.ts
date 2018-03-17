@@ -1,12 +1,9 @@
-'use strict';
-/* globals describe it beforeEach */
-
 // Test for a test, huh?
 
-const path = require('path');
-const llparse = require('llparse');
+import * as path from 'path';
+import { Builder, Compiler } from 'llparse-compiler';
 
-const Fixture = require('../');
+import { Fixture } from '../src/fixture';
 
 const TMP_DIR = path.join(__dirname, 'tmp');
 const EXTRA_CODE = path.join(__dirname, 'fixtures', 'extra.c');
@@ -14,18 +11,20 @@ const EXTRA_CODE = path.join(__dirname, 'fixtures', 'extra.c');
 describe('llparse-test-fixture', function() {
   this.timeout(10000);
 
-  let fixture;
-  let p;
+  let fixture: Fixture;
+  let c: Compiler;
+  let p: Builder;
 
   beforeEach(() => {
-    p = llparse.create();
+    c = new Compiler();
+    p = c.createBuilder();
 
     fixture = new Fixture({
       buildDir: TMP_DIR
     });
   });
 
-  it('should build with extra files', (callback) => {
+  it('should build with extra files', async () => {
     const start = p.node('start');
     const invoke = p.invoke(p.code.match('llparse__print_off'));
 
@@ -37,13 +36,15 @@ describe('llparse-test-fixture', function() {
     invoke
       .otherwise(start);
 
-    const build = fixture.build(p, start, 'extra', {
+    const art = c.compile(start, p.properties);
+    const build = fixture.build(art, 'extra', {
       extra: [ EXTRA_CODE ]
     });
 
-    build('abaaba', 'off=2\noff=5\n', callback);
+    await build.check('abaaba', 'off=2\noff=5\n');
   });
 
+  /*
   it('should normalize spans', (callback) => {
     const start = p.node('start');
     const sub = p.node('sub');
@@ -121,4 +122,5 @@ describe('llparse-test-fixture', function() {
       'off=4'
     ], callback);
   });
+  */
 });

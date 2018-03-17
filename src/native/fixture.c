@@ -35,7 +35,7 @@ void llparse__print(const char* p, const char* endp,
   return;
 }
 
-void llparse__debug(llparse_state_t* s, const char* p, const char* endp,
+void llparse__debug(llparse_t* s, const char* p, const char* endp,
                     const char* msg) {
   if (p == endp) {
     fprintf(stderr, "off=%-3d next=null debug=%s\n", (int) (p - start), msg);
@@ -46,7 +46,7 @@ void llparse__debug(llparse_state_t* s, const char* p, const char* endp,
 }
 
 
-static int llparse__run_one(llparse_state_t* s, const char* input, int len) {
+static int llparse__run_one(llparse_t* s, const char* input, int len) {
   int code;
   const char* p;
   const char* endp;
@@ -90,7 +90,7 @@ static int llparse__run_one(llparse_state_t* s, const char* input, int len) {
 
 
 static int llparse__run_bench(const char* input, int len) {
-  llparse_state_t s;
+  llparse_t s;
   int64_t i;
   struct timeval start;
   struct timeval end;
@@ -129,7 +129,7 @@ static int llparse__run_bench(const char* input, int len) {
 
 
 static int llparse__run_scan(int scan, const char* input, int len) {
-  llparse_state_t s;
+  llparse_t s;
   llparse_init(&s);
 
   if (scan <= 0) {
@@ -158,7 +158,7 @@ static int llparse__run_scan(int scan, const char* input, int len) {
 
 
 static int llparse__run_stdin() {
-  llparse_state_t s;
+  llparse_t s;
 
   llparse_init(&s);
 
