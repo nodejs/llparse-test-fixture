@@ -50,11 +50,13 @@ export class FixtureResult {
     let stdout = '';
     proc.stdout.on('data', chunk => stdout += chunk);
 
+    const onEnd =
+      new Promise((resolve) => proc.stdout.once('end', () => resolve()));
     const { code, signal } = await (new Promise((resolve) => {
       proc.once('exit', (code, signal) => resolve({ code, signal }));
     }) as Promise<{ code: number, signal: string }>);
 
-    await new Promise((resolve) => proc.stdout.once('end', () => resolve()));
+    await onEnd;
 
     if (signal) {
       throw new Error(`Test killed with signal: "${signal}"`);
