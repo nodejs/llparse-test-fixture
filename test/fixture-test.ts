@@ -1,7 +1,7 @@
 // Test for a test, huh?
 
-import * as path from 'path';
 import { LLParse } from 'llparse';
+import * as path from 'path';
 
 import { Fixture } from '../src/fixture';
 
@@ -18,7 +18,7 @@ describe('llparse-test-fixture', function() {
     p = new LLParse();
 
     fixture = new Fixture({
-      buildDir: TMP_DIR
+      buildDir: TMP_DIR,
     });
   });
 
@@ -34,8 +34,8 @@ describe('llparse-test-fixture', function() {
     invoke
       .otherwise(start);
 
-    const build = build(p.build(start), 'extra', {
-      extra: [ EXTRA_CODE ]
+    const build = fixture.build(p.build(start), 'extra', {
+      extra: [ EXTRA_CODE ],
     });
 
     await build.check('abaaba', 'off=2\noff=5\n');
@@ -56,7 +56,7 @@ describe('llparse-test-fixture', function() {
       .otherwise(span.end(start));
 
     const build = fixture.build(p.build(start), 'span', {
-      extra: [ EXTRA_CODE ]
+      extra: [ EXTRA_CODE ],
     });
 
     await build.check(
@@ -73,7 +73,7 @@ describe('llparse-test-fixture', function() {
       .otherwise(p.error(1, 'some reason'));
 
     const build = fixture.build(p.build(start), 'error', {
-      extra: [ EXTRA_CODE ]
+      extra: [ EXTRA_CODE ],
     });
 
     await build.check(
@@ -89,7 +89,7 @@ describe('llparse-test-fixture', function() {
       .otherwise(p.error(1, 'some reason'));
 
     const build = fixture.build(p.build(start), 'error', {
-      extra: [ EXTRA_CODE ]
+      extra: [ EXTRA_CODE ],
     });
 
     await build.check(
@@ -105,14 +105,14 @@ describe('llparse-test-fixture', function() {
       .skipTo(invoke.otherwise(start));
 
     const build = fixture.build(p.build(start), 'mixed', {
-      extra: [ EXTRA_CODE ]
+      extra: [ EXTRA_CODE ],
     });
 
     await build.check('aaab', [
       'off=1',
       'off=2',
       /off=\d/,
-      'off=4'
+      'off=4',
     ]);
   });
 });

@@ -27,11 +27,11 @@ export class FixtureResult {
       });
     }
 
-    const results: ReadonlyArray<string>[] =
+    const results: ReadonlyArray< ReadonlyArray<string> > =
       await Promise.all(ranges.map((range) => this.spawn(range, input)));
 
     let all: string[] = [];
-    results.forEach(result => all = all.concat(result));
+    results.forEach((result) => all = all.concat(result));
 
     all.forEach((output, index) => {
       this.checkScan(index + 1, output, expected);
@@ -44,16 +44,18 @@ export class FixtureResult {
       `${range.from}:${range.to}`,
       input,
     ], {
-      stdio: [ null, 'pipe', 'inherit' ]
+      stdio: [ null, 'pipe', 'inherit' ],
     });
 
     let stdout = '';
-    proc.stdout.on('data', chunk => stdout += chunk);
+    proc.stdout.on('data', (chunk) => stdout += chunk);
 
     const onEnd =
       new Promise((resolve) => proc.stdout.once('end', () => resolve()));
     const { code, signal } = await (new Promise((resolve) => {
-      proc.once('exit', (code, signal) => resolve({ code, signal }));
+      proc.once('exit', (exitCode, exitSignal) => {
+        resolve({ code: exitCode, signal: exitSignal });
+      });
     }) as Promise<{ code: number, signal: string }>);
 
     await onEnd;
@@ -71,7 +73,7 @@ export class FixtureResult {
   }
 
   private checkScan(scan: number, actual: string, expected: FixtureExpected)
-    :void {
+    : void {
     if (typeof expected === 'string') {
       assert.strictEqual(actual, expected, `Scan value: ${scan}`);
       return;
@@ -104,7 +106,7 @@ export class FixtureResult {
     }
 
     // Just make it fail, there shouldn't be extra lines
-    let expectedArr = (expected as ReadonlyArray<string | RegExp>).slice();
+    const expectedArr = (expected as ReadonlyArray<string | RegExp>).slice();
     while (expectedArr.length < lines.length) {
       expectedArr.push(/$^/);
     }
@@ -141,15 +143,15 @@ export class FixtureResult {
       }
 
       return {
-        type: 'span',
-        off: parseInt(match[1], 10),
         len: parseInt(match[2], 10),
+        off: parseInt(match[1], 10),
         span: match[3],
-        value: match[4]
+        type: 'span',
+        value: match[4],
       };
     };
 
-    const parsed = lines.filter(l => l).map(parse);
+    const parsed = lines.filter((l) => l).map(parse);
     const lastMap = new Map();
     const res: NormalizeItem[] = [];
 

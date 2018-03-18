@@ -72,7 +72,7 @@ export class Fixture {
     fs.writeFileSync(header, artifacts.header);
 
     let args = [
-      '-g3', '-Os', '-fvisibility=hidden'
+      '-g3', '-Os', '-fvisibility=hidden',
     ];
 
     // This is rather lame, but should work
@@ -82,7 +82,7 @@ export class Fixture {
 
     args = args.concat([
       '-include', header, '-I', NATIVE_DIR,
-      FIXTURE
+      FIXTURE,
     ]);
     if (artifacts.llvm !== undefined) {
       fs.writeFileSync(llvm, artifacts.llvm);
@@ -103,12 +103,15 @@ export class Fixture {
 
     const ret = spawnSync(CLANG, args);
     if (ret.status !== 0) {
-      if (ret.stdout)
+      if (ret.stdout) {
         process.stderr.write(ret.stdout);
-      if (ret.stderr)
+      }
+      if (ret.stderr) {
         process.stderr.write(ret.stderr);
-      if (ret.error)
+      }
+      if (ret.error) {
         throw ret.error;
+      }
       throw new Error('clang exit code: ' + (ret.status || ret.signal));
     }
 
