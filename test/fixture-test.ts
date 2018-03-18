@@ -1,7 +1,7 @@
 // Test for a test, huh?
 
 import * as path from 'path';
-import { Builder, Compiler } from 'llparse-compiler';
+import { LLParse } from 'llparse';
 
 import { Fixture } from '../src/fixture';
 
@@ -12,12 +12,10 @@ describe('llparse-test-fixture', function() {
   this.timeout(10000);
 
   let fixture: Fixture;
-  let c: Compiler;
-  let p: Builder;
+  let p: LLParse;
 
   beforeEach(() => {
-    c = new Compiler();
-    p = c.createBuilder();
+    p = new LLParse();
 
     fixture = new Fixture({
       buildDir: TMP_DIR
@@ -36,16 +34,14 @@ describe('llparse-test-fixture', function() {
     invoke
       .otherwise(start);
 
-    const art = c.compile(start, p.properties);
-    const build = fixture.build(art, 'extra', {
+    const build = build(p.build(start), 'extra', {
       extra: [ EXTRA_CODE ]
     });
 
     await build.check('abaaba', 'off=2\noff=5\n');
   });
 
-  /*
-  it('should normalize spans', (callback) => {
+  it('should normalize spans', async () => {
     const start = p.node('start');
     const sub = p.node('sub');
     const span = p.span(p.code.span('llparse__on_span'));
@@ -59,68 +55,64 @@ describe('llparse-test-fixture', function() {
       .match('b', sub)
       .otherwise(span.end(start));
 
-    const build = fixture.build(p, start, 'span', {
+    const build = fixture.build(p.build(start), 'span', {
       extra: [ EXTRA_CODE ]
     });
 
-    build(
+    await build.check(
       'abbbaabba',
       'off=1 len=3 span[span]="bbb"\n' +
-        'off=6 len=2 span[span]="bb"\n',
-      callback);
+        'off=6 len=2 span[span]="bb"\n');
   });
 
-  it('should print errors', (callback) => {
+  it('should print errors', async () => {
     const start = p.node('start');
 
     start
       .match('a', start)
       .otherwise(p.error(1, 'some reason'));
 
-    const build = fixture.build(p, start, 'error', {
+    const build = fixture.build(p.build(start), 'error', {
       extra: [ EXTRA_CODE ]
     });
 
-    build(
+    await build.check(
       'aaab',
-      'off=3 error code=1 reason="some reason"\n',
-      callback);
+      'off=3 error code=1 reason="some reason"\n');
   });
 
-  it('should check against regexp', (callback) => {
+  it('should check against regexp', async () => {
     const start = p.node('start');
 
     start
       .match('a', start)
       .otherwise(p.error(1, 'some reason'));
 
-    const build = fixture.build(p, start, 'error', {
+    const build = fixture.build(p.build(start), 'error', {
       extra: [ EXTRA_CODE ]
     });
 
-    build(
+    await build.check(
       'aaab',
-      /off=\d+ error code=1 reason="some reason"/g,
-      callback);
+      /off=\d+ error code=1 reason="some reason"/g);
   });
 
-  it('should check against array of mixed strings/regexps', (callback) => {
+  it('should check against array of mixed strings/regexps', async () => {
     const start = p.node('start');
     const invoke = p.invoke(p.code.match('llparse__print_off'));
 
     start
       .skipTo(invoke.otherwise(start));
 
-    const build = fixture.build(p, start, 'mixed', {
+    const build = fixture.build(p.build(start), 'mixed', {
       extra: [ EXTRA_CODE ]
     });
 
-    build('aaab', [
+    await build.check('aaab', [
       'off=1',
       'off=2',
       /off=\d/,
       'off=4'
-    ], callback);
+    ]);
   });
-  */
 });
