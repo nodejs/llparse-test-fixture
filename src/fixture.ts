@@ -6,6 +6,8 @@ import * as path from 'path';
 
 import { FixtureResult } from './result';
 
+export { FixtureResult };
+
 const CLANG = process.env.CLANG || 'clang';
 const CFLAGS = process.env.CFLAGS || '';
 
