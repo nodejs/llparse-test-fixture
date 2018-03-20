@@ -12,7 +12,8 @@
 /* 8 gb */
 static const int64_t kBytes = 8LL << 30;
 
-int llparse__in_bench;
+int llparse__in_bench = 0;
+static int llparse__in_loop;
 static const char* start;
 
 void llparse__print(const char* p, const char* endp,
@@ -86,6 +87,22 @@ static int llparse__run_one(llparse_t* s, const char* input, int len) {
   }
 
   return code;
+}
+
+
+static int llparse__run_loop(const char* input, int len) {
+  llparse_t s;
+
+  llparse_init(&s);
+  for (;;) {
+    int code;
+
+    code = llparse__run_one(&s, input, len);
+    if (code != 0)
+      return code;
+  }
+
+  return 0;
 }
 
 
@@ -209,6 +226,9 @@ int main(int argc, char** argv) {
 
   if (strcmp(argv[1], "bench") == 0) {
     llparse__in_bench = 1;
+  } else if (strcmp(argv[1], "loop") == 0) {
+    llparse__in_bench = 1;
+    llparse__in_loop = 1;
   } else {
     const char* colon;
     char* endptr;
@@ -235,6 +255,9 @@ int main(int argc, char** argv) {
   }
 
   start = input;
+
+  if (llparse__in_loop)
+    return llparse__run_loop(input, len);
 
   if (llparse__in_bench)
     return llparse__run_bench(input, len);
