@@ -71,6 +71,7 @@ static int llparse__run_one(llparse_t* s, const char* input, int len) {
     llparse__print(s->error_pos, endp, "pause");
 
     /* Resume */
+    s->error = 0;
     input = s->error_pos;
     paused = 1;
   }
