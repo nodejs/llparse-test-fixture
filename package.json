@@ -40,6 +40,6 @@
     "typescript": "^2.7.2"
   },
   "dependencies": {
-    "llparse": "^4.0.0-beta0"
+    "llparse": "^5.0.0"
   }
 }
