@@ -7,6 +7,10 @@
 
 #include "fixture.h"
 
+#ifdef LLPARSE__TEST_INIT
+void LLPARSE__TEST_INIT(llparse_t* p);
+#endif  /* LLPARSE__TEST_INIT */
+
 /* NOTE: include of parser is inserted through `-include` clang argument */
 
 /* 8 gb */
@@ -95,6 +99,10 @@ static int llparse__run_loop(const char* input, int len) {
   llparse_t s;
 
   llparse_init(&s);
+#ifdef LLPARSE__TEST_INIT
+  LLPARSE__TEST_INIT(&s);
+#endif  /* LLPARSE__TEST_INIT */
+
   for (;;) {
     int code;
 
@@ -118,6 +126,9 @@ static int llparse__run_bench(const char* input, int len) {
   int64_t iterations;
 
   llparse_init(&s);
+#ifdef LLPARSE__TEST_INIT
+  LLPARSE__TEST_INIT(&s);
+#endif  /* LLPARSE__TEST_INIT */
 
   iterations = kBytes / (int64_t) len;
 
@@ -149,6 +160,9 @@ static int llparse__run_bench(const char* input, int len) {
 static int llparse__run_scan(int scan, const char* input, int len) {
   llparse_t s;
   llparse_init(&s);
+#ifdef LLPARSE__TEST_INIT
+  LLPARSE__TEST_INIT(&s);
+#endif  /* LLPARSE__TEST_INIT */
 
   if (scan <= 0) {
     fprintf(stderr, "Invalid scan value\n");
@@ -179,6 +193,9 @@ static int llparse__run_stdin() {
   llparse_t s;
 
   llparse_init(&s);
+#ifdef LLPARSE__TEST_INIT
+  LLPARSE__TEST_INIT(&s);
+#endif  /* LLPARSE__TEST_INIT */
 
   for (;;) {
     char buf[16384];
