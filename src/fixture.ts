@@ -110,28 +110,33 @@ export class Fixture {
     const digest = hash.digest('hex');
 
     const out = path.join(BUILD_DIR, name + '.' + digest);
+    const link = path.join(BUILD_DIR, name);
 
-    // Use cached binary
-    if (fs.existsSync(out)) {
-      return new FixtureResult(out, this.options.maxParallel);
+    if (!fs.existsSync(out)) {
+      // Compile binary, no cached version available
+      args.push('-o', out);
+
+      const ret = spawnSync(CLANG, args);
+      if (ret.status !== 0) {
+        if (ret.stdout) {
+          process.stderr.write(ret.stdout);
+        }
+        if (ret.stderr) {
+          process.stderr.write(ret.stderr);
+        }
+        if (ret.error) {
+          throw ret.error;
+        }
+        throw new Error('clang exit code: ' + (ret.status || ret.signal));
+      }
     }
 
-    args.push('-o', out);
-
-    const ret = spawnSync(CLANG, args);
-    if (ret.status !== 0) {
-      if (ret.stdout) {
-        process.stderr.write(ret.stdout);
-      }
-      if (ret.stderr) {
-        process.stderr.write(ret.stderr);
-      }
-      if (ret.error) {
-        throw ret.error;
-      }
-      throw new Error('clang exit code: ' + (ret.status || ret.signal));
+    try {
+      fs.unlinkSync(link);
+    } catch (e) {
+      // no-op
     }
-
-    return new FixtureResult(out, this.options.maxParallel);
+    fs.linkSync(out, link);
+    return new FixtureResult(link, this.options.maxParallel);
   }
 }
