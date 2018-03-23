@@ -47,8 +47,8 @@ export class FixtureResult {
       stdio: [ null, 'pipe', 'inherit' ],
     });
 
-    let stdout = '';
-    proc.stdout.on('data', (chunk) => stdout += chunk);
+    const stdout: Buffer[] = [];
+    proc.stdout.on('data', (chunk: Buffer) => stdout.push(chunk));
 
     const onEnd =
       new Promise((resolve) => proc.stdout.once('end', () => resolve()));
@@ -68,7 +68,8 @@ export class FixtureResult {
       throw new Error(`Test exited with code: "${code}"`);
     }
 
-    const out = stdout.split(/===== SCAN \d+ START =====\n/g).slice(1);
+    const out = Buffer.concat(stdout).toString()
+      .split(/===== SCAN \d+ START =====\n/g).slice(1);
     return out.map((part) => this.normalizeSpans(part));
   }
 
