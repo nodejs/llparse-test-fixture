@@ -1,5 +1,6 @@
 import { Buffer } from 'buffer';
 import { spawnSync } from 'child_process';
+import * as crypto from 'crypto';
 import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
@@ -64,11 +65,14 @@ export class Fixture {
                options: IFixtureBuildOptions = {}): FixtureResult {
     const BUILD_DIR = this.options.buildDir;
 
+    const hash = crypto.createHash('sha256');
+
     const llvm = path.join(BUILD_DIR, name + '.ll');
     const bitcode = path.join(BUILD_DIR, name + '.bc');
     const header = path.join(BUILD_DIR, name + '.h');
-    const out = path.join(BUILD_DIR, name);
 
+    hash.update('header');
+    hash.update(artifacts.header);
     fs.writeFileSync(header, artifacts.header);
 
     let args = [
@@ -85,9 +89,13 @@ export class Fixture {
       FIXTURE,
     ]);
     if (artifacts.llvm !== undefined) {
+      hash.update('llvm');
+      hash.update(artifacts.llvm);
       fs.writeFileSync(llvm, artifacts.llvm);
       args.push(llvm);
     } else if (artifacts.bitcode !== undefined) {
+      hash.update('bitcode');
+      hash.update(artifacts.bitcode);
       fs.writeFileSync(bitcode, artifacts.bitcode);
       args.push(bitcode);
     }
@@ -97,6 +105,15 @@ export class Fixture {
     }
     if (options.extra) {
       args = args.concat(options.extra);
+    }
+    hash.update(args.join(' '));
+    const digest = hash.digest('hex');
+
+    const out = path.join(BUILD_DIR, name + '.' + digest);
+
+    // Use cached binary
+    if (fs.existsSync(out)) {
+      return new FixtureResult(out, this.options.maxParallel);
     }
 
     args.push('-o', out);
