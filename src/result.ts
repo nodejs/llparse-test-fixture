@@ -9,22 +9,32 @@ interface IRange {
   readonly to: number;
 }
 
+export interface IFixtureResultOptions {
+  readonly noScan?: boolean;
+}
+
 export class FixtureResult {
   constructor(private readonly executable: string,
               private readonly maxParallel: number) {
   }
 
-  public async check(input: string, expected: FixtureExpected): Promise<void> {
+  public async check(input: string, expected: FixtureExpected,
+                     options: IFixtureResultOptions = {}): Promise<void> {
     const ranges: IRange[] = [];
     const maxParallel = this.maxParallel;
 
     const rawLength = Buffer.byteLength(input);
     const len = Math.ceil(rawLength / maxParallel);
-    for (let i = 1; i <= rawLength; i += len) {
-      ranges.push({
-        from: i,
-        to: Math.min(i + len, rawLength + 1),
-      });
+
+    if (options.noScan === true) {
+      ranges.push({ from: rawLength, to: rawLength + 1 });
+    } else {
+      for (let i = 1; i <= rawLength; i += len) {
+        ranges.push({
+          from: i,
+          to: Math.min(i + len, rawLength + 1),
+        });
+      }
     }
 
     const results: ReadonlyArray< ReadonlyArray<string> > =

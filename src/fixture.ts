@@ -5,9 +5,9 @@ import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
 
-import { FixtureResult } from './result';
+import { FixtureResult, IFixtureResultOptions } from './result';
 
-export { FixtureResult };
+export { FixtureResult, IFixtureResultOptions };
 
 const CLANG = process.env.CLANG || 'clang';
 const CFLAGS = process.env.CFLAGS || '';
