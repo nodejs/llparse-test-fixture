@@ -1,3 +1,4 @@
+#include <assert.h>
 #include <inttypes.h>
 #include <stdarg.h>
 #include <stdio.h>
@@ -39,6 +40,54 @@ void llparse__print(const char* p, const char* endp,
     fprintf(stdout, "off=%d %s\n", (int) (p - start), buf);
   return;
 }
+
+
+int llparse__print_span(const char* name, const char* p, const char* endp) {
+  if (llparse__in_bench)
+    return 0;
+
+  for (;;) {
+    const char* cr;
+    const char* lf;
+    int len;
+
+    cr = memchr(p, '\r', endp - p);
+    lf = memchr(p, '\n', endp - p);
+    if (cr != NULL && lf != NULL) {
+      if (cr < lf) {
+        lf = NULL;
+      } else {
+        cr = NULL;
+      }
+    }
+
+    if (lf != NULL) {
+      len = (int) (lf - p);
+    } else if (cr != NULL) {
+      len = (int) (cr - p);
+    } else {
+      len = (int) (endp - p);
+    }
+    llparse__print(p, endp, "len=%d span[%s]=\"%.*s\"",
+                   len, name, len, p);
+    p += len;
+
+    if (lf != NULL) {
+      llparse__print(p, endp, "len=1 span[%s]=lf", name);
+      assert(p != endp);
+      p++;
+    } else if (cr != NULL) {
+      llparse__print(p, endp, "len=1 span[%s]=cr", name);
+      assert(p != endp);
+      p++;
+    }
+
+    if (p == endp)
+      break;
+  }
+  return 0;
+}
+
 
 void llparse__debug(llparse_t* s, const char* p, const char* endp,
                     const char* msg) {
