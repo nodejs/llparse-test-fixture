@@ -1,7 +1,7 @@
 import * as assert from 'assert';
 import { Buffer } from 'buffer';
-import * as path from 'path';
 import { spawn } from 'child_process';
+import * as path from 'path';
 
 export type FixtureExpected = string | RegExp | ReadonlyArray<string | RegExp>;
 
