@@ -1,5 +1,6 @@
 import * as assert from 'assert';
 import { Buffer } from 'buffer';
+import * as path from 'path';
 import { spawn } from 'child_process';
 
 export type FixtureExpected = string | RegExp | ReadonlyArray<string | RegExp>;
@@ -7,6 +8,11 @@ export type FixtureExpected = string | RegExp | ReadonlyArray<string | RegExp>;
 interface IRange {
   readonly from: number;
   readonly to: number;
+}
+
+interface ISingleRun {
+  readonly name: string;
+  readonly outputs: ReadonlyArray<string>;
 }
 
 export interface IFixtureResultOptions {
@@ -40,25 +46,26 @@ export class FixtureResult {
     const results =
       await Promise.all(ranges.map((range) => this.spawn(range, input)));
 
-    let all: Array<ReadonlyArray<string>> = [];
-    results.forEach((result) => all = all.concat(result));
-
-    all.forEach((outputs, index) => {
-      for (const output of outputs) {
-        this.checkScan(index + 1, output, expected);
+    for (const rangeResults of results) {
+      for (const single of rangeResults) {
+        for (const [ index, output ] of single.outputs.entries()) {
+          this.checkScan(single.name, index + 1, output, expected);
+        }
       }
-    });
+    }
   }
 
   private async spawn(range: IRange, input: string)
-    : Promise<ReadonlyArray<ReadonlyArray<string>>> {
+    : Promise<ReadonlyArray<ISingleRun>> {
     return await Promise.all(this.executables.map((executable) => {
       return this.spawnSingle(executable, range, input);
     }));
   }
 
   private async spawnSingle(executable: string, range: IRange, input: string)
-    : Promise<ReadonlyArray<string>> {
+    : Promise<ISingleRun> {
+    const name = path.basename(executable);
+
     const proc = spawn(executable, [
       `${range.from}:${range.to}`,
       input,
@@ -80,29 +87,36 @@ export class FixtureResult {
     await onEnd;
 
     if (signal) {
-      throw new Error(`Test killed with signal: "${signal}"`);
+      throw new Error(`Test "${name}" killed with signal: "${signal}"`);
     }
 
     if (code !== 0) {
-      throw new Error(`Test exited with code: "${code}"`);
+      throw new Error(`Test "${name}" exited with code: "${code}"`);
     }
 
     const out = Buffer.concat(stdout).toString()
       .split(/===== SCAN \d+ START =====\n/g).slice(1);
-    return out.map((part) => this.normalizeSpans(part));
+
+    return {
+      name,
+      outputs: out.map((part) => this.normalizeSpans(part)),
+    };
   }
 
-  private checkScan(scan: number, actual: string, expected: FixtureExpected)
-    : void {
+  private checkScan(name: string, scan: number, actual: string,
+                    expected: FixtureExpected): void {
     if (typeof expected === 'string') {
-      assert.strictEqual(actual, expected, `Scan value: ${scan}`);
+      assert.strictEqual(actual, expected,
+        `Executable: ${name}\n` +
+        `Scan value: ${scan}`);
       return;
     }
 
     if (expected instanceof RegExp) {
       expected.lastIndex = 0;
       assert.ok(expected.test(actual),
-        `Scan value: ${scan} \n` +
+        `Executable: ${name}\n` +
+        `Scan value: ${scan}\n` +
         `  got     : ${JSON.stringify(actual)}\n` +
         `  against : ${expected}`);
       return;
@@ -136,6 +150,7 @@ export class FixtureResult {
 
       if (typeof expectedLine === 'string') {
         assert.strictEqual(line, expectedLine,
+          `Executable: ${name}\n` +
           `Scan value: ${scan} at line: ${lineNum + 1}\n` +
           `  output  : ${lines.join('\n')}`);
         return;
@@ -143,6 +158,7 @@ export class FixtureResult {
 
       expectedLine.lastIndex = 0;
       assert.ok(expectedLine.test(line),
+        `Executable: ${name}\n` +
         `Scan value: ${scan} at line: ${lineNum + 1}\n` +
         `  got     : ${JSON.stringify(line)}\n` +
         `  against : ${expectedLine}\n` +
