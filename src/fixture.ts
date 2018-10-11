@@ -28,6 +28,7 @@ export interface IFixtureBuildOptions {
 
 export interface IFixtureArtifacts {
   readonly bitcode?: Buffer;
+  readonly c?: string;
   readonly header: string;
   readonly llvm?: string;
 }
@@ -69,74 +70,111 @@ export class Fixture {
 
     const llvm = path.join(BUILD_DIR, name + '.ll');
     const bitcode = path.join(BUILD_DIR, name + '.bc');
+    const c = path.join(BUILD_DIR, name + '.c');
     const header = path.join(BUILD_DIR, name + '.h');
 
     hash.update('header');
     hash.update(artifacts.header);
     fs.writeFileSync(header, artifacts.header);
 
-    let args = [
+    const commonArgs = [
       '-g3', '-Os', '-fvisibility=hidden',
+      '-I', NATIVE_DIR,
+      '-include', header,
+      FIXTURE,
     ];
 
     // This is rather lame, but should work
     if (CFLAGS) {
-      args = args.concat(CFLAGS.split(/\s+/g));
+      for (const flag of CFLAGS.split(/\s+/g)) {
+        commonArgs.push(flag);
+      }
     }
 
-    args = args.concat([
-      '-include', header, '-I', NATIVE_DIR,
-      FIXTURE,
-    ]);
+    const args = {
+      bitcode: [] as string[],
+      c: [ '-I', BUILD_DIR ],
+    };
     if (artifacts.llvm !== undefined) {
       hash.update('llvm');
       hash.update(artifacts.llvm);
       fs.writeFileSync(llvm, artifacts.llvm);
-      args.push(llvm);
+      args.bitcode.push(llvm);
     } else if (artifacts.bitcode !== undefined) {
       hash.update('bitcode');
       hash.update(artifacts.bitcode);
       fs.writeFileSync(bitcode, artifacts.bitcode);
-      args.push(bitcode);
+      args.bitcode.push(bitcode);
+    }
+
+    if (artifacts.c !== undefined) {
+      hash.update('c');
+      hash.update(artifacts.c);
+      fs.writeFileSync(c, artifacts.c);
+      args.c.push(c);
     }
 
     if (this.options.extra) {
-      args = args.concat(this.options.extra);
+      for (const extra of this.options.extra) {
+        commonArgs.push(extra);
+      }
     }
     if (options.extra) {
-      args = args.concat(options.extra);
+      for (const extra of options.extra) {
+        commonArgs.push(extra);
+      }
     }
-    hash.update(args.join(' '));
+    hash.update(commonArgs.join(' '));
     const digest = hash.digest('hex');
 
     const out = path.join(BUILD_DIR, name + '.' + digest);
     const link = path.join(BUILD_DIR, name);
 
+    const executables: string[] = [];
+
     if (!fs.existsSync(out)) {
       // Compile binary, no cached version available
-      args.push('-o', out);
-
-      const ret = spawnSync(CLANG, args);
-      if (ret.status !== 0) {
-        if (ret.stdout) {
-          process.stderr.write(ret.stdout);
-        }
-        if (ret.stderr) {
-          process.stderr.write(ret.stderr);
-        }
-        if (ret.error) {
-          throw ret.error;
-        }
-        throw new Error('clang exit code: ' + (ret.status || ret.signal));
-      }
+      this.clang(commonArgs.concat(args.bitcode, '-o', out));
     }
-
     try {
       fs.unlinkSync(link);
     } catch (e) {
       // no-op
     }
     fs.linkSync(out, link);
-    return new FixtureResult(link, this.options.maxParallel);
+    executables.push(link);
+
+    if (artifacts.c !== undefined) {
+      const cOut = path.join(BUILD_DIR, name + '-c.' + digest);
+      const cLink = path.join(BUILD_DIR, name + '-c');
+      if (!fs.existsSync(cOut)) {
+        this.clang(commonArgs.concat(args.c, '-o', cOut));
+      }
+      try {
+        fs.unlinkSync(cLink);
+      } catch (e) {
+        // no-op
+      }
+      fs.linkSync(cOut, cLink);
+      executables.push(cLink);
+    }
+
+    return new FixtureResult(executables, this.options.maxParallel);
+  }
+
+  private clang(args: ReadonlyArray<string>): void {
+    const ret = spawnSync(CLANG, args);
+    if (ret.status !== 0) {
+      if (ret.stdout) {
+        process.stderr.write(ret.stdout);
+      }
+      if (ret.stderr) {
+        process.stderr.write(ret.stderr);
+      }
+      if (ret.error) {
+        throw ret.error;
+      }
+      throw new Error('clang exit code: ' + (ret.status || ret.signal));
+    }
   }
 }

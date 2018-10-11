@@ -14,7 +14,7 @@ export interface IFixtureResultOptions {
 }
 
 export class FixtureResult {
-  constructor(private readonly executable: string,
+  constructor(private readonly executables: ReadonlyArray<string>,
               private readonly maxParallel: number) {
   }
 
@@ -37,20 +37,29 @@ export class FixtureResult {
       }
     }
 
-    const results: ReadonlyArray< ReadonlyArray<string> > =
+    const results =
       await Promise.all(ranges.map((range) => this.spawn(range, input)));
 
-    let all: string[] = [];
+    let all: Array<ReadonlyArray<string>> = [];
     results.forEach((result) => all = all.concat(result));
 
-    all.forEach((output, index) => {
-      this.checkScan(index + 1, output, expected);
+    all.forEach((outputs, index) => {
+      for (const output of outputs) {
+        this.checkScan(index + 1, output, expected);
+      }
     });
   }
 
   private async spawn(range: IRange, input: string)
-    : Promise<ReadonlyArray<string> > {
-    const proc = spawn(this.executable, [
+    : Promise<ReadonlyArray<ReadonlyArray<string>>> {
+    return await Promise.all(this.executables.map((executable) => {
+      return this.spawnSingle(executable, range, input);
+    }));
+  }
+
+  private async spawnSingle(executable: string, range: IRange, input: string)
+    : Promise<ReadonlyArray<string>> {
+    const proc = spawn(executable, [
       `${range.from}:${range.to}`,
       input,
     ], {
