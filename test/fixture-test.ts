@@ -94,7 +94,6 @@ describe('llparse-test-fixture', function() {
       'off=4 len=1 span[span]=lf',
       'off=5 len=1 span[span]="b"',
       'off=6 len=1 span[span]=cr',
-      'off=7 len=0 span[span]=""',
       'off=7 len=1 span[span]=lf',
       'off=8 len=3 span[span]="bbb"',
       'off=13 len=2 span[span]="bb"',

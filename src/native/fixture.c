@@ -68,9 +68,11 @@ int llparse__print_span(const char* name, const char* p, const char* endp) {
     } else {
       len = (int) (endp - p);
     }
-    llparse__print(p, endp, "len=%d span[%s]=\"%.*s\"",
-                   len, name, len, p);
-    p += len;
+    if (len != 0 || (lf == NULL && cr == NULL)) {
+      llparse__print(p, endp, "len=%d span[%s]=\"%.*s\"",
+                     len, name, len, p);
+      p += len;
+    }
 
     if (lf != NULL) {
       llparse__print(p, endp, "len=1 span[%s]=lf", name);
