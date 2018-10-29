@@ -17,6 +17,7 @@ interface ISingleRun {
 
 export interface IFixtureResultOptions {
   readonly noScan?: boolean;
+  readonly scan?: number;
 }
 
 export class FixtureResult {
@@ -34,6 +35,8 @@ export class FixtureResult {
 
     if (options.noScan === true) {
       ranges.push({ from: rawLength, to: rawLength + 1 });
+    } else if (options.scan) {
+      ranges.push({ from: options.scan, to: options.scan + 1 });
     } else {
       for (let i = 1; i <= rawLength; i += len) {
         ranges.push({
