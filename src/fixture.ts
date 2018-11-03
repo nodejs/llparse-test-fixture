@@ -174,7 +174,10 @@ export class Fixture {
       if (ret.error) {
         throw ret.error;
       }
-      throw new Error('clang exit code: ' + (ret.status || ret.signal));
+
+      const escapedArgs = args.map((arg) => JSON.stringify(arg));
+      throw new Error('clang exit code: ' + (ret.status || ret.signal) +
+          `\narguments: ${escapedArgs.join(' ')}`);
     }
   }
 }
