@@ -66,7 +66,7 @@ function runOne(binding, p, buf, globalOff = 0) {
     off += p.errorOff;
     binding.setGlobalOff(globalOff + off);
 
-    binding.llparse__print(off, 'pause');
+    binding.llparse__print(0, 'pause');
 
     // Resume
     p.error = 0;
