@@ -63,13 +63,14 @@ function runOne(binding, p, buf, globalOff = 0) {
       return -1;
     }
 
+    off += p.errorOff;
+    binding.setGlobalOff(globalOff + off);
+
     binding.llparse__print(off, 'pause');
 
     // Resume
     p.error = 0;
-    off += p.errorOff;
     paused = true;
-    binding.setGlobalOff(globalOff + off);
   }
 
   if (code !== 0) {
