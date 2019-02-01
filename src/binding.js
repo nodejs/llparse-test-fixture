@@ -1,4 +1,3 @@
-const Buffer = require('buffer').Buffer;
 const format = require('util').format;
 
 module.exports = (binding, inBench) => {
