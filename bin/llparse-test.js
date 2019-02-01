@@ -18,6 +18,11 @@ const argv = yargs
     describe: 'Binding to use',
     type: 'string',
   })
+  .option('init', {
+    alias: 'i',
+    describe: 'The name of function from the binding to be used at init',
+    type: 'string',
+  })
   .demandOption([ 'parser' ])
   .string('_')
   .command('bench <input>', 'benchmark input', (yargs) => {
@@ -95,6 +100,9 @@ function benchmark(binding, Parser, input) {
   const ITERATIONS = (TOTAL / buf.length) >>> 0;
 
   const p = new Parser();
+  if (argv.init) {
+    binding[argv.init](p);
+  }
 
   const start = Date.now();
   for (let i = 0; i < ITERATIONS; i++) {
@@ -127,6 +135,9 @@ function scan(binding, Parser, range, input) {
     console.log('===== SCAN %d START =====', scan);
 
     const p = new Parser();
+    if (argv.init) {
+      binding[argv.init](p);
+    }
     for (let off = 0; off < buf.length; off += scan) {
       if (runOne(binding, p, buf.slice(off, off + scan), off) !== 0) {
         break;

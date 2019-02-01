@@ -22,12 +22,14 @@ export interface IFixtureOptions {
   readonly clang?: string;
   readonly extra?: ReadonlyArray<string>;
   readonly extraJS?: ReadonlyArray<string>;
+  readonly initJS?: string;
   readonly maxParallel?: number;
 }
 
 export interface IFixtureBuildOptions {
   readonly extra?: ReadonlyArray<string>;
   readonly extraJS?: ReadonlyArray<string>;
+  readonly initJS?: string;
 }
 
 export interface IFixtureArtifacts {
@@ -43,6 +45,7 @@ interface IFixtureInternalOptions {
   readonly clang: string;
   readonly extra: ReadonlyArray<string>;
   readonly extraJS: ReadonlyArray<string>;
+  readonly initJS?: string;
   readonly maxParallel: number;
 }
 
@@ -124,6 +127,7 @@ export class Fixture {
     }
 
     const extraJS = this.options.extraJS.concat(options.extraJS || []);
+    const initJS = options.initJS || this.options.initJS;
     if (artifacts.js !== undefined) {
       hash.update('js');
       hash.update(artifacts.js);
@@ -132,6 +136,11 @@ export class Fixture {
 
       hash.update('extra-js');
       hash.update(extraJS.join(' '));
+
+      if (initJS) {
+        hash.update('init-js');
+        hash.update(initJS);
+      }
     }
 
     for (const extra of this.options.extra) {
@@ -181,10 +190,21 @@ export class Fixture {
 
     if (artifacts.js !== undefined) {
       const jsOut = path.join(BUILD_DIR, name + '-js');
-      const bindings = extraJS.map((extra) => `-b ${path.resolve(extra)}`);
+
+      const jsArgs = [
+        `-p ${path.resolve(js)}`,
+      ];
+      for (const extra of extraJS) {
+        jsArgs.push(`-b ${path.resolve(extra)}`);
+      }
+
+      if (initJS) {
+        jsArgs.push(`-i ${initJS}`);
+      }
+
       fs.writeFileSync(jsOut,
         '#!/bin/sh\n' +
-        `${JS_RUNNER} -p ${path.resolve(js)} ${bindings.join(' ')} "$1" "$2"`);
+        `${JS_RUNNER} ${jsArgs.join(' ')} "$1" "$2"`);
       fs.chmodSync(jsOut, 0o775);
       executables.push(jsOut);
     }
