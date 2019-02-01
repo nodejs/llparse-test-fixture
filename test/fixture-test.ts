@@ -7,6 +7,7 @@ import { Fixture } from '../src/fixture';
 
 const TMP_DIR = path.join(__dirname, 'tmp');
 const EXTRA_CODE = path.join(__dirname, 'fixtures', 'extra.c');
+const EXTRA_JS = path.join(__dirname, 'fixtures', 'extra.ts');
 
 describe('llparse-test-fixture', function() {
   this.timeout(10000);
@@ -38,6 +39,7 @@ describe('llparse-test-fixture', function() {
       c: { header: 'extra' },
     }), 'extra', {
       extra: [ EXTRA_CODE ],
+      extraJS: [ EXTRA_JS ],
     });
 
     await build.check('abaaba', 'off=2\noff=5\n');
@@ -61,6 +63,7 @@ describe('llparse-test-fixture', function() {
       c: { header: 'span' },
     }), 'span', {
       extra: [ EXTRA_CODE ],
+      extraJS: [ EXTRA_JS ],
     });
 
     await build.check(
@@ -87,6 +90,7 @@ describe('llparse-test-fixture', function() {
       c: { header: 'span-lf' },
     }), 'span-lf', {
       extra: [ EXTRA_CODE ],
+      extraJS: [ EXTRA_JS ],
     });
 
     await build.check('abbb\nb\r\nbbbaabba', [
@@ -111,6 +115,7 @@ describe('llparse-test-fixture', function() {
       c: { header: 'error' },
     }), 'error', {
       extra: [ EXTRA_CODE ],
+      extraJS: [ EXTRA_JS ],
     });
 
     await build.check(
@@ -129,6 +134,7 @@ describe('llparse-test-fixture', function() {
       c: { header: 'error-re' },
     }), 'error-re', {
       extra: [ EXTRA_CODE ],
+      extraJS: [ EXTRA_JS ],
     });
 
     await build.check(
@@ -147,6 +153,7 @@ describe('llparse-test-fixture', function() {
       c: { header: 'mixed' },
     }), 'mixed', {
       extra: [ EXTRA_CODE ],
+      extraJS: [ EXTRA_JS ],
     });
 
     await build.check('aaab', [

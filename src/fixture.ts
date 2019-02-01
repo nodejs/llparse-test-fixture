@@ -15,20 +15,25 @@ const CFLAGS = process.env.CFLAGS || '';
 const NATIVE_DIR = path.join(__dirname, '..', 'src', 'native');
 const FIXTURE = path.join(NATIVE_DIR, 'fixture.c');
 
+const JS_RUNNER = path.join(__dirname, '..', 'bin', 'llparse-test.ts');
+
 export interface IFixtureOptions {
   readonly buildDir: string;
   readonly clang?: string;
   readonly extra?: ReadonlyArray<string>;
+  readonly extraJS?: ReadonlyArray<string>;
   readonly maxParallel?: number;
 }
 
 export interface IFixtureBuildOptions {
   readonly extra?: ReadonlyArray<string>;
+  readonly extraJS?: ReadonlyArray<string>;
 }
 
 export interface IFixtureArtifacts {
   readonly bitcode?: Buffer;
   readonly c?: string;
+  readonly js?: string;
   readonly header: string;
   readonly llvm?: string;
 }
@@ -36,7 +41,8 @@ export interface IFixtureArtifacts {
 interface IFixtureInternalOptions {
   readonly buildDir: string;
   readonly clang: string;
-  readonly extra: ReadonlyArray<string> | undefined;
+  readonly extra: ReadonlyArray<string>;
+  readonly extraJS: ReadonlyArray<string>;
   readonly maxParallel: number;
 }
 
@@ -50,7 +56,8 @@ export class Fixture {
     this.options = {
       buildDir: options.buildDir,
       clang: options.clang === undefined ? CLANG : options.clang,
-      extra: options.extra,
+      extra: options.extra || [],
+      extraJS: options.extraJS || [],
       maxParallel: options.maxParallel === undefined ?
         os.cpus().length : options.maxParallel,
     };
@@ -71,6 +78,7 @@ export class Fixture {
     const llvm = path.join(BUILD_DIR, name + '.ll');
     const bitcode = path.join(BUILD_DIR, name + '.bc');
     const c = path.join(BUILD_DIR, name + '.c');
+    const js = path.join(BUILD_DIR, name + '.js');
     const header = path.join(BUILD_DIR, name + '.h');
 
     hash.update('header');
@@ -94,6 +102,7 @@ export class Fixture {
     const args = {
       bitcode: [] as string[],
       c: [ '-I', BUILD_DIR ],
+      js: [] as string[],
     };
     if (artifacts.llvm !== undefined) {
       hash.update('llvm');
@@ -114,17 +123,28 @@ export class Fixture {
       args.c.push(c);
     }
 
-    if (this.options.extra) {
-      for (const extra of this.options.extra) {
-        commonArgs.push(extra);
-      }
+    const extraJS = this.options.extraJS.concat(options.extraJS || []);
+    if (artifacts.js !== undefined) {
+      hash.update('js');
+      hash.update(artifacts.js);
+      fs.writeFileSync(js, artifacts.js);
+      args.js.push(js);
+
+      hash.update('extra-js');
+      hash.update(extraJS.join(' '));
+    }
+
+    for (const extra of this.options.extra) {
+      commonArgs.push(extra);
     }
     if (options.extra) {
       for (const extra of options.extra) {
         commonArgs.push(extra);
       }
     }
+    hash.update('common-args');
     hash.update(commonArgs.join(' '));
+
     const digest = hash.digest('hex');
 
     const out = path.join(BUILD_DIR, name + '.' + digest);
@@ -157,6 +177,16 @@ export class Fixture {
       }
       fs.linkSync(cOut, cLink);
       executables.push(cLink);
+    }
+
+    if (artifacts.js !== undefined) {
+      const jsOut = path.join(BUILD_DIR, name + '-js');
+      const bindings = extraJS.map((extra) => `-b ${path.resolve(extra)}`);
+      fs.writeFileSync(jsOut,
+        '#!/bin/sh\n' +
+        `${JS_RUNNER} -p ${path.resolve(js)} ${bindings.join(' ')} "$1" "$2"`);
+      fs.chmodSync(jsOut, 0o775);
+      executables.push(jsOut);
     }
 
     return new FixtureResult(executables, this.options.maxParallel);

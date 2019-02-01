@@ -83,7 +83,7 @@ export class FixtureResult {
       new Promise((resolve) => proc.stdout.once('end', () => resolve()));
     const { code, signal } = await (new Promise((resolve) => {
       proc.once('exit', (exitCode, exitSignal) => {
-        resolve({ code: exitCode, signal: exitSignal });
+        resolve({ code: exitCode!, signal: exitSignal! });
       });
     }) as Promise<{ code: number, signal: string }>);
 
