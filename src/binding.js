@@ -29,6 +29,12 @@ module.exports = (binding, inBench) => {
       }
     };
 
+    // Empty span
+    if (off === end) {
+      binding.llparse__print(off, 'len=0 span[%s]=""', name);
+      return 0;
+    }
+
     for (let i = off; i < end; i++) {
       const ch = buf[i];
 
