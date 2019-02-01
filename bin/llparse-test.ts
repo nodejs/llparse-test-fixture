@@ -38,9 +38,6 @@ const argv = yargs
   .alias('help', 'h')
   .argv;
 
-console.log(argv);
-process.exit(0);
-
 const IS_BENCH = argv._[0] === 'bench';
 
 const PARSER_FILE = path.resolve(argv.parser as string);
