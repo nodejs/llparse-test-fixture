@@ -7,7 +7,7 @@ import { Fixture } from '../src/fixture';
 
 const TMP_DIR = path.join(__dirname, 'tmp');
 const EXTRA_CODE = path.join(__dirname, 'fixtures', 'extra.c');
-const EXTRA_JS = path.join(__dirname, 'fixtures', 'extra.ts');
+const EXTRA_JS = path.join(__dirname, 'fixtures', 'extra.js');
 
 describe('llparse-test-fixture', function() {
   this.timeout(10000);

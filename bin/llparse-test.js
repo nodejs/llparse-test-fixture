@@ -1,12 +1,11 @@
-#!/usr/bin/env npx ts-node
-import { Buffer } from 'buffer';
-import * as fs from 'fs';
-import * as path from 'path';
+#!/usr/bin/env node
+const Buffer = require('buffer').Buffer;
+const fs = require('fs');
+const path = require('path');
 
-import * as yargs from 'yargs';
+const yargs = require('yargs');
 
-import { ERROR_PAUSE } from '../src/fixture';
-import DEFAULT_BINDING from '../src/binding';
+const DEFAULT_BINDING = require('../src/binding');
 
 const argv = yargs
   .option('parser', {
@@ -40,22 +39,22 @@ const argv = yargs
 
 const IS_BENCH = argv._[0] === 'bench';
 
-const PARSER_FILE = path.resolve(argv.parser as string);
+const PARSER_FILE = path.resolve(argv.parser);
 const EXTRA_BINDINGS = argv.binding ?
   Array.isArray(argv.binding) ? argv.binding : [ argv.binding ]
   :
   [];
 
-function runOne(binding: any, p: any, buf: Buffer, globalOff = 0): number {
+function runOne(binding, p, buf, globalOff = 0) {
   let paused = false;
-  let code: number;
+  let code;
 
   binding.setGlobalOff(globalOff);
 
   let off = 0;
   for (;;) {
     code = p.execute(off === 0 ? buf : buf.slice(off));
-    if (code !== ERROR_PAUSE) {
+    if (code !== binding.LLPARSE__ERROR_PAUSE) {
       break;
     }
 
@@ -87,7 +86,7 @@ function runOne(binding: any, p: any, buf: Buffer, globalOff = 0): number {
   return code;
 }
 
-function benchmark(binding: any, Parser: any, input: string) {
+function benchmark(binding, Parser, input) {
   const buf = Buffer.from(input);
 
   // JS is slower than C, use less bytes
@@ -115,7 +114,7 @@ function benchmark(binding: any, Parser: any, input: string) {
     size, bandwidth, ops, secs.toFixed(2));
 }
 
-function scan(binding: any, Parser: any, range: string, input: string) {
+function scan(binding, Parser, range, input) {
   const buf = Buffer.from(input);
 
   const [ from, to ] = range.split(':', 2).map((x) => parseInt(x, 10) | 0);
@@ -128,7 +127,7 @@ function scan(binding: any, Parser: any, range: string, input: string) {
 
     const p = new Parser();
     for (let off = 0; off < buf.length; off += scan) {
-      if (runOne(binding, p, buf.slice(off, off + scan), off) !== 0){ 
+      if (runOne(binding, p, buf.slice(off, off + scan), off) !== 0) {
         break;
       }
     }
@@ -136,26 +135,27 @@ function scan(binding: any, Parser: any, range: string, input: string) {
 }
 
 async function main() {
+  // Load bindings
   const bindings = [ DEFAULT_BINDING ];
   for (const extra of EXTRA_BINDINGS) {
-    const m = await import(path.resolve(extra));
+    const m = require(path.resolve(extra));
     bindings.push(m.default || m);
   }
 
   // Apply bindings
-  const binding: any = {};
+  const binding = {};
   for (const apply of bindings) {
     apply(binding, IS_BENCH);
   }
 
   // Import parser
-  const init = await import(PARSER_FILE);
+  const init = require(PARSER_FILE);
   const Parser = init(binding);
 
   if (IS_BENCH) {
-    benchmark(binding, Parser, argv.input as string);
+    benchmark(binding, Parser, argv.input);
   } else {
-    scan(binding, Parser, argv.range as string, argv.input as string);
+    scan(binding, Parser, argv.range, argv.input);
   }
 }
 

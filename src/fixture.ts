@@ -15,7 +15,7 @@ const CFLAGS = process.env.CFLAGS || '';
 const NATIVE_DIR = path.join(__dirname, '..', 'src', 'native');
 const FIXTURE = path.join(NATIVE_DIR, 'fixture.c');
 
-const JS_RUNNER = path.join(__dirname, '..', 'bin', 'llparse-test.ts');
+const JS_RUNNER = path.join(__dirname, '..', 'bin', 'llparse-test.js');
 
 export interface IFixtureOptions {
   readonly buildDir: string;
