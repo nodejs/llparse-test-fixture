@@ -13,6 +13,7 @@
     "test": "npm run mocha && npm run lint"
   },
   "files": [
+    "bin",
     "lib",
     "src"
   ],
