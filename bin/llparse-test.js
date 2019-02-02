@@ -1,11 +1,11 @@
-#!/usr/bin/env node
-const Buffer = require('buffer').Buffer;
-const fs = require('fs');
-const path = require('path');
+#!/usr/bin/env node -r esm
+import { Buffer } from 'buffer';
+import * as fs from 'fs';
+import * as path from 'path';
 
-const yargs = require('yargs');
+import * as yargs from 'yargs';
 
-const DEFAULT_BINDING = require('../src/binding');
+import DEFAULT_BINDING from '../src/binding';
 
 const argv = yargs
   .option('parser', {
@@ -150,7 +150,7 @@ async function main() {
   // Load bindings
   const bindings = [ DEFAULT_BINDING ];
   for (const extra of EXTRA_BINDINGS) {
-    const m = require(path.resolve(extra));
+    const m = (await import(path.resolve(extra))).default;
     bindings.push(m.default || m);
   }
 
@@ -161,7 +161,7 @@ async function main() {
   }
 
   // Import parser
-  const init = require(PARSER_FILE);
+  const init = (await import(PARSER_FILE)).default;
   const Parser = init(binding);
 
   if (IS_BENCH) {

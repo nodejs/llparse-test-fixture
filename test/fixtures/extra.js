@@ -1,6 +1,6 @@
-const Buffer = require('buffer').Buffer;
+import { Buffer } from 'buffer';
 
-module.exports = (binding, inBench) => {
+export default (binding, inBench) => {
   const nop = () => 0;
 
   binding.llparse__print_off = inBench ? nop : (_, buf, off) => {

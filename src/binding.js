@@ -1,6 +1,6 @@
-const format = require('util').format;
+import { format } from 'util';
 
-module.exports = (binding, inBench) => {
+export default (binding, inBench) => {
   // Just a random value, really
   binding.LLPARSE__ERROR_PAUSE = 0x7fa73caa;
 
