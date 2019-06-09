@@ -38,10 +38,17 @@ void llparse__print(const char* p, const char* endp,
   len = vsnprintf(buf, sizeof(buf), fmt, ap);
   va_end(ap);
 
-  if (len == 0)
-    fprintf(stdout, "off=%d\n", (int) (p - start));
-  else
-    fprintf(stdout, "off=%d %s\n", (int) (p - start), buf);
+  if (p == NULL) {
+    if (len == 0)
+      fprintf(stdout, "off=NULL\n");
+    else
+      fprintf(stdout, "off=NULL %s\n", buf);
+  } else {
+    if (len == 0)
+      fprintf(stdout, "off=%d\n", (int) (p - start));
+    else
+      fprintf(stdout, "off=%d %s\n", (int) (p - start), buf);
+  }
   return;
 }
 
