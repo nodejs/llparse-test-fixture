@@ -12,6 +12,10 @@
 void LLPARSE__TEST_INIT(llparse_t* p);
 #endif  /* LLPARSE__TEST_INIT */
 
+#ifdef LLPARSE__TEST_FINISH
+void LLPARSE__TEST_FINISH(llparse_t* p);
+#endif  /* LLPARSE__TEST_FINISH */
+
 /* NOTE: include of parser is inserted through `-include` clang argument */
 
 /* 8 gb */
@@ -162,6 +166,10 @@ static int llparse__run_loop(const char* input, int len) {
       return code;
   }
 
+#ifdef LLPARSE__TEST_FINISH
+  LLPARSE__TEST_FINISH(&s);
+#endif  /* LLPARSE__TEST_FINISH */
+
   return 0;
 }
 
@@ -192,6 +200,10 @@ static int llparse__run_bench(const char* input, int len) {
       return code;
   }
   gettimeofday(&end, NULL);
+
+#ifdef LLPARSE__TEST_FINISH
+  LLPARSE__TEST_FINISH(&s);
+#endif  /* LLPARSE__TEST_FINISH */
 
   time = (end.tv_sec - start.tv_sec);
   time += (double) (end.tv_usec - start.tv_usec) * 1e-6;
@@ -236,6 +248,10 @@ static int llparse__run_scan(int scan, const char* input, int len) {
     len -= max;
   }
 
+#ifdef LLPARSE__TEST_FINISH
+  LLPARSE__TEST_FINISH(&s);
+#endif  /* LLPARSE__TEST_FINISH */
+
   return 0;
 }
 
@@ -264,6 +280,10 @@ static int llparse__run_stdin() {
       return -1;
     }
   }
+
+#ifdef LLPARSE__TEST_FINISH
+  LLPARSE__TEST_FINISH(&s);
+#endif  /* LLPARSE__TEST_FINISH */
 
   return 0;
 }
