@@ -46,16 +46,13 @@ export class FixtureResult {
       }
     }
 
-    const results =
-      await Promise.all(ranges.map((range) => this.spawn(range, input)));
-
-    for (const rangeResults of results) {
-      for (const single of rangeResults) {
+    await Promise.all(ranges.map(async (range) => {
+      for (const single of await this.spawn(range, input)) {
         for (const [ index, output ] of single.outputs.entries()) {
           this.checkScan(single.name, index + 1, output, expected);
         }
       }
-    }
+    }));
   }
 
   private async spawn(range: IRange, input: string)
