@@ -171,7 +171,7 @@ export class Fixture {
       // no-op
     }
     fs.linkSync(out, link);
-    executables.push(link);
+    executables.push(out);
 
     if (artifacts.c !== undefined) {
       const cOut = path.join(BUILD_DIR, name + '-c.' + digest);
@@ -185,7 +185,7 @@ export class Fixture {
         // no-op
       }
       fs.linkSync(cOut, cLink);
-      executables.push(cLink);
+      executables.push(cOut);
     }
 
     if (artifacts.js !== undefined) {
