@@ -4,9 +4,39 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <sys/time.h>
 
 #include "fixture.h"
+
+#if defined(_MSC_VER)
+  #if defined(_MSC_EXTENSIONS)
+    #define DELTA_EPOCH_IN_MICROSECS  11644473600000000Ui64
+  #else
+    #define DELTA_EPOCH_IN_MICROSECS  11644473600000000ULL
+  #endif
+
+  #include <windows.h>
+
+  int gettimeofday(struct timeval* tv, void* tz) {
+    FILETIME ft;
+    unsigned __int64 tmpres = 0;
+
+    GetSystemTimeAsFileTime(&ft);
+
+    tmpres |= ft.dwHighDateTime;
+    tmpres <<= 32;
+    tmpres |= ft.dwLowDateTime;
+
+    tmpres /= 10;  /*convert into microseconds*/
+    /*converting file time to unix epoch*/
+    tmpres -= DELTA_EPOCH_IN_MICROSECS;
+    tv->tv_sec = (long)(tmpres / 1000000UL);
+    tv->tv_usec = (long)(tmpres % 1000000UL);
+
+    return 0;
+  }
+#else
+  #include <sys/time.h>
+#endif /* defined(_MSC_VER) */
 
 #ifdef LLPARSE__TEST_INIT
 void LLPARSE__TEST_INIT(llparse_t* p);
