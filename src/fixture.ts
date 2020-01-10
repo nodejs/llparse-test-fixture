@@ -192,10 +192,10 @@ export class Fixture {
       const jsOut = path.join(BUILD_DIR, name + '-js');
 
       const jsArgs = [
-        `-p ${path.resolve(js)}`,
+        `-p ${path.resolve(js).replace(/(\s+)/g, '\\$1')}`,
       ];
       for (const extra of extraJS) {
-        jsArgs.push(`-b ${path.resolve(extra)}`);
+        jsArgs.push(`-b ${path.resolve(extra).replace(/(\s+)/g, '\\$1')}`);
       }
 
       if (initJS) {
@@ -204,7 +204,7 @@ export class Fixture {
 
       fs.writeFileSync(jsOut,
         '#!/bin/sh\n' +
-        `${JS_RUNNER} ${jsArgs.join(' ')} "$1" "$2"`);
+        `${JS_RUNNER.replace(/(\s+)/g, '\\$1')} ${jsArgs.join(' ')} "$1" "$2"`);
       fs.chmodSync(jsOut, 0o775);
       executables.push(jsOut);
     }
