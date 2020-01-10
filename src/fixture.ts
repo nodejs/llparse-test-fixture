@@ -189,7 +189,7 @@ export class Fixture {
     }
 
     if (artifacts.js !== undefined) {
-      const jsOut = path.join(BUILD_DIR, name + '-js');
+      const jsOut = path.join(BUILD_DIR, name + `-js${process.platform === 'win32' ? '.cmd' : ''}`);
 
       const jsArgs = [
         `-p ${path.resolve(js).replace(/(\s+)/g, '\\$1')}`,
@@ -202,9 +202,11 @@ export class Fixture {
         jsArgs.push(`-i ${initJS}`);
       }
 
-      fs.writeFileSync(jsOut,
-        '#!/bin/sh\n' +
-        `${JS_RUNNER.replace(/(\s+)/g, '\\$1')} ${jsArgs.join(' ')} "$1" "$2"`);
+      const content = process.platform === 'win32'
+          ? `node ${JS_RUNNER.replace(/(\s+)/g, '\\$1')} ${jsArgs.join(' ')} "%1" "%2"`
+          : `#!/bin/sh\n${JS_RUNNER.replace(/(\s+)/g, '\\$1')} ${jsArgs.join(' ')} "$1" "$2"`;
+
+      fs.writeFileSync(jsOut, content);
       fs.chmodSync(jsOut, 0o775);
       executables.push(jsOut);
     }

@@ -70,6 +70,7 @@ export class FixtureResult {
       `${range.from}:${range.to}`,
       input,
     ], {
+      shell: process.platform === 'win32',
       stdio: [ null, 'pipe', 'inherit' ],
     });
 
