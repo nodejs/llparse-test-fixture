@@ -16,7 +16,10 @@
 
   #include <windows.h>
 
-  int gettimeofday(struct timeval* tv, void* tz) {
+  static int gettimeofday(struct timeval* tv, void* tz) {
+    assert(tv != NULL);
+    assert(tz == NULL);
+
     FILETIME ft;
     unsigned __int64 tmpres = 0;
 
