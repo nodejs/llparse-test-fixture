@@ -91,13 +91,14 @@ export class FixtureResult {
 
     const stdoutText = Buffer.concat(stdout).toString();
     const stderrText = Buffer.concat(stderr).toString();
+    const stdOutErr = `stdout: ${stdoutText}\nstderr: ${stderrText}`;
 
     if (signal) {
-      throw new Error(`Test "${name}" killed with signal: "${signal}".\nstdout: ${stdoutText}\nstderr: ${stderrText}`);
+      throw new Error(`Test "${name}" killed with signal: "${signal}".\n${stdOutErr}`);
     }
 
     if (code !== 0) {
-      throw new Error(`Test "${name}" exited with code: "${code}".\nstdout: ${stdoutText}\nstderr: ${stderrText}`);
+      throw new Error(`Test "${name}" exited with code: "${code}".\n${stdOutErr}`);
     }
 
     const out = stdoutText.split(/===== SCAN \d+ START =====\n/g).slice(1);

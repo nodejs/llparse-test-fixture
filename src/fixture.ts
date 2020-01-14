@@ -202,9 +202,11 @@ export class Fixture {
         jsArgs.push(`-i ${initJS}`);
       }
 
+      const bin = JS_RUNNER.replace(/(\s+)/g, '\\$1');
+      const fixedArgs = jsArgs.join(' ');
       const content = process.platform === 'win32'
-          ? `node ${JS_RUNNER.replace(/(\s+)/g, '\\$1')} ${jsArgs.join(' ')} "%1" "%2"`
-          : `#!/bin/sh\n${JS_RUNNER.replace(/(\s+)/g, '\\$1')} ${jsArgs.join(' ')} "$1" "$2"`;
+          ? `node ${bin} ${fixedArgs} "%1" "%2"`
+          : `#!/bin/sh\n${bin} ${fixedArgs} "$1" "$2"`;
 
       fs.writeFileSync(jsOut, content);
       fs.chmodSync(jsOut, 0o775);
