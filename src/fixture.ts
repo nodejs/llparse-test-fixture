@@ -1,5 +1,5 @@
 import { Buffer } from 'buffer';
-import { spawnSync } from 'child_process';
+import { spawn } from 'child_process';
 import * as crypto from 'crypto';
 import * as fs from 'fs';
 import * as os from 'os';
@@ -72,8 +72,8 @@ export class Fixture {
     }
   }
 
-  public build(artifacts: IFixtureArtifacts, name: string,
-               options: IFixtureBuildOptions = {}): FixtureResult {
+  public async build(artifacts: IFixtureArtifacts, name: string,
+                     options: IFixtureBuildOptions = {}): Promise<FixtureResult> {
     const BUILD_DIR = this.options.buildDir;
 
     const hash = crypto.createHash('sha256');
@@ -86,7 +86,7 @@ export class Fixture {
 
     hash.update('header');
     hash.update(artifacts.header);
-    fs.writeFileSync(header, artifacts.header);
+    await fs.promises.writeFile(header, artifacts.header);
 
     const commonArgs = [
       '-g3', '-Os', '-fvisibility=hidden',
@@ -110,19 +110,19 @@ export class Fixture {
     if (artifacts.llvm !== undefined) {
       hash.update('llvm');
       hash.update(artifacts.llvm);
-      fs.writeFileSync(llvm, artifacts.llvm);
+      await fs.promises.writeFile(llvm, artifacts.llvm);
       args.bitcode.push(llvm);
     } else if (artifacts.bitcode !== undefined) {
       hash.update('bitcode');
       hash.update(artifacts.bitcode);
-      fs.writeFileSync(bitcode, artifacts.bitcode);
+      await fs.promises.writeFile(bitcode, artifacts.bitcode);
       args.bitcode.push(bitcode);
     }
 
     if (artifacts.c !== undefined) {
       hash.update('c');
       hash.update(artifacts.c);
-      fs.writeFileSync(c, artifacts.c);
+      await fs.promises.writeFile(c, artifacts.c);
       args.c.push(c);
     }
 
@@ -131,7 +131,7 @@ export class Fixture {
     if (artifacts.js !== undefined) {
       hash.update('js');
       hash.update(artifacts.js);
-      fs.writeFileSync(js, artifacts.js);
+      await fs.promises.writeFile(js, artifacts.js);
       args.js.push(js);
 
       hash.update('extra-js');
@@ -163,28 +163,28 @@ export class Fixture {
 
     if (!fs.existsSync(out)) {
       // Compile binary, no cached version available
-      this.clang(commonArgs.concat(args.bitcode, '-o', out));
+      await this.clang(commonArgs.concat(args.bitcode, '-o', out));
     }
     try {
-      fs.unlinkSync(link);
+      await fs.promises.unlink(link);
     } catch (e) {
       // no-op
     }
-    fs.linkSync(out, link);
+    await fs.promises.link(out, link);
     executables.push(out);
 
     if (artifacts.c !== undefined) {
       const cOut = path.join(BUILD_DIR, name + '-c.' + digest);
       const cLink = path.join(BUILD_DIR, name + '-c');
       if (!fs.existsSync(cOut)) {
-        this.clang(commonArgs.concat(args.c, '-o', cOut));
+        await this.clang(commonArgs.concat(args.c, '-o', cOut));
       }
       try {
-        fs.unlinkSync(cLink);
+        await fs.promises.unlink(cLink);
       } catch (e) {
         // no-op
       }
-      fs.linkSync(cOut, cLink);
+      await fs.promises.link(cOut, cLink);
       executables.push(cOut);
     }
 
@@ -208,29 +208,38 @@ export class Fixture {
           ? `node ${bin} ${fixedArgs} "%1" "%2"`
           : `#!/bin/sh\n${bin} ${fixedArgs} "$1" "$2"`;
 
-      fs.writeFileSync(jsOut, content);
-      fs.chmodSync(jsOut, 0o775);
+      await fs.promises.writeFile(jsOut, content);
+      await fs.promises.chmod(jsOut, 0o775);
       executables.push(jsOut);
     }
 
     return new FixtureResult(executables, this.options.maxParallel);
   }
 
-  private clang(args: ReadonlyArray<string>): void {
-    const ret = spawnSync(CLANG, args);
-    if (ret.status !== 0) {
-      if (ret.stdout) {
-        process.stderr.write(ret.stdout);
+  private async clang(args: ReadonlyArray<string>): Promise<void> {
+    const proc = spawn(CLANG, args, {
+      stdio: [null, 'pipe', 'pipe'],
+    });
+
+    const stdout: Buffer[] = [];
+    proc.stdout.on('data', (chunk: Buffer) => stdout.push(chunk));
+    const stderr: Buffer[] = [];
+    proc.stderr.on('data', (chunk: Buffer) => stderr.push(chunk));
+
+    const code = await (new Promise((resolve) => {
+      proc.once('exit', (exitCode) => resolve(exitCode!));
+    }) as Promise<number>);
+
+    if (code !== 0) {
+      if (stdout.length > 0) {
+        process.stderr.write(Buffer.concat(stdout).toString());
       }
-      if (ret.stderr) {
-        process.stderr.write(ret.stderr);
-      }
-      if (ret.error) {
-        throw ret.error;
+      if (stderr.length > 0) {
+        process.stderr.write(Buffer.concat(stderr).toString());
       }
 
       const escapedArgs = args.map((arg) => JSON.stringify(arg));
-      throw new Error('clang exit code: ' + (ret.status || ret.signal) +
+      throw new Error('clang exit code: ' + code +
           `\narguments: ${escapedArgs.join(' ')}`);
     }
   }

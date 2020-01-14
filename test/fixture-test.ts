@@ -36,7 +36,7 @@ describe('llparse-test-fixture', function() {
     invoke
       .otherwise(start);
 
-    const build = fixture.build(p.build(start, {
+    const build = await fixture.build(p.build(start, {
       c: { header: 'extra' },
     }), 'extra', {
       extra: [ EXTRA_CODE ],
@@ -60,7 +60,7 @@ describe('llparse-test-fixture', function() {
       .match('b', sub)
       .otherwise(span.end(start));
 
-    const build = fixture.build(p.build(start, {
+    const build = await fixture.build(p.build(start, {
       c: { header: 'span' },
     }), 'span', {
       extra: [ EXTRA_CODE ],
@@ -87,7 +87,7 @@ describe('llparse-test-fixture', function() {
       .match([ 'b', '\r', '\n' ], sub)
       .otherwise(span.end(start));
 
-    const build = fixture.build(p.build(start, {
+    const build = await fixture.build(p.build(start, {
       c: { header: 'span-lf' },
     }), 'span-lf', {
       extra: [ EXTRA_CODE ],
@@ -112,7 +112,7 @@ describe('llparse-test-fixture', function() {
       .match('a', start)
       .otherwise(p.error(1, 'some reason'));
 
-    const build = fixture.build(p.build(start, {
+    const build = await fixture.build(p.build(start, {
       c: { header: 'error' },
     }), 'error', {
       extra: [ EXTRA_CODE ],
@@ -131,7 +131,7 @@ describe('llparse-test-fixture', function() {
       .match('a', start)
       .otherwise(p.error(1, 'some reason'));
 
-    const build = fixture.build(p.build(start, {
+    const build = await fixture.build(p.build(start, {
       c: { header: 'error-re' },
     }), 'error-re', {
       extra: [ EXTRA_CODE ],
@@ -150,7 +150,7 @@ describe('llparse-test-fixture', function() {
     start
       .skipTo(invoke.otherwise(start));
 
-    const build = fixture.build(p.build(start, {
+    const build = await fixture.build(p.build(start, {
       c: { header: 'mixed' },
     }), 'mixed', {
       extra: [ EXTRA_CODE ],

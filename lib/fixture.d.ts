@@ -25,6 +25,6 @@ export declare const ERROR_PAUSE = 2141666474;
 export declare class Fixture {
     private readonly options;
     constructor(options: IFixtureOptions);
-    build(artifacts: IFixtureArtifacts, name: string, options?: IFixtureBuildOptions): FixtureResult;
+    build(artifacts: IFixtureArtifacts, name: string, options?: IFixtureBuildOptions): Promise<FixtureResult>;
     private clang;
 }
