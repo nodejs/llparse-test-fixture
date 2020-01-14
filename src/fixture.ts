@@ -66,7 +66,7 @@ export class Fixture {
     };
 
     try {
-      fs.mkdirSync(this.options.buildDir);
+      fs.mkdirSync(this.options.buildDir, { recursive: true });
     } catch (e) {
       // no-op
     }
