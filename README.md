@@ -1,5 +1,4 @@
 # llparse-test-fixture
-[![Build Status](https://secure.travis-ci.org/indutny/llparse-test-fixture.svg)](http://travis-ci.org/indutny/llparse-test-fixture)
 [![NPM version](https://badge.fury.io/js/llparse-test-fixture.svg)](https://badge.fury.io/js/llparse-test-fixture)
 
 A test fixture for llparse (and llparse-based modules).

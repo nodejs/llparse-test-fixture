@@ -70,11 +70,14 @@ export class FixtureResult {
       `${range.from}:${range.to}`,
       input,
     ], {
-      stdio: [ null, 'pipe', 'inherit' ],
+      shell: process.platform === 'win32',
+      stdio: [ null, 'pipe', 'pipe' ],
     });
 
     const stdout: Buffer[] = [];
     proc.stdout.on('data', (chunk: Buffer) => stdout.push(chunk));
+    const stderr: Buffer[] = [];
+    proc.stderr.on('data', (chunk: Buffer) => stderr.push(chunk));
 
     const onEnd =
       new Promise((resolve) => proc.stdout.once('end', () => resolve()));
@@ -86,16 +89,19 @@ export class FixtureResult {
 
     await onEnd;
 
+    const stdoutText = Buffer.concat(stdout).toString();
+    const stderrText = Buffer.concat(stderr).toString();
+    const stdOutErr = `stdout: ${stdoutText}\nstderr: ${stderrText}`;
+
     if (signal) {
-      throw new Error(`Test "${name}" killed with signal: "${signal}"`);
+      throw new Error(`Test "${name}" killed with signal: "${signal}".\n${stdOutErr}`);
     }
 
     if (code !== 0) {
-      throw new Error(`Test "${name}" exited with code: "${code}"`);
+      throw new Error(`Test "${name}" exited with code: "${code}".\n${stdOutErr}`);
     }
 
-    const out = Buffer.concat(stdout).toString()
-      .split(/===== SCAN \d+ START =====\n/g).slice(1);
+    const out = stdoutText.split(/===== SCAN \d+ START =====\n/g).slice(1);
 
     return {
       name,
