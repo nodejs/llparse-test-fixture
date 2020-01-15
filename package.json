@@ -34,7 +34,7 @@
   "homepage": "https://github.com/indutny/llparse-test-fixture#readme",
   "devDependencies": {
     "@types/mocha": "^5.2.5",
-    "@types/node": "^10.11.7",
+    "@types/node": "^10.12.0",
     "mocha": "^5.2.0",
     "ts-node": "^7.0.1",
     "tslint": "^5.11.0",
