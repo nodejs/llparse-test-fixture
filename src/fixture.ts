@@ -66,7 +66,6 @@ export class Fixture {
 
     const hash = crypto.createHash('sha256');
 
-    const llvm = path.join(BUILD_DIR, name + '.ll');
     const c = path.join(BUILD_DIR, name + '.c');
     const header = path.join(BUILD_DIR, name + '.h');
 
