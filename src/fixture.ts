@@ -92,12 +92,10 @@ export class Fixture {
       c: [ '-I', BUILD_DIR ],
     };
 
-    if (artifacts.c !== undefined) {
-      hash.update('c');
-      hash.update(artifacts.c);
-      await fs.promises.writeFile(c, artifacts.c);
-      args.c.push(c);
-    }
+    hash.update('c');
+    hash.update(artifacts.c);
+    await fs.promises.writeFile(c, artifacts.c);
+    args.c.push(c);
 
     for (const extra of this.options.extra) {
       commonArgs.push(extra);
