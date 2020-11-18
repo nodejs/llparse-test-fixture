@@ -42,7 +42,7 @@
   },
   "dependencies": {
     "esm": "^3.2.25",
-    "llparse": "^6.4.0",
+    "llparse": "^7.0.0",
     "yargs": "^15.4.1"
   }
 }
