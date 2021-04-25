@@ -22,8 +22,10 @@ jobs:
           Invoke-Expression (New-Object System.Net.WebClient).DownloadString('https://get.scoop.sh')
           scoop install llvm --global
 
-          # Scoop modifies the PATH so we make the modified PATH global.
-          echo "::set-env name=PATH::$env:PATH"
+          # Scoop modifies the PATH so we make the modified PATH available for
+          # subsequent steps.
+          echo "C:\ProgramData\scoop\shims" >> $Env:GITHUB_PATH
+          echo "C:\Users\runneradmin\scoop\shims" >> $Env:GITHUB_PATH
 
       - name: Fetch code
         uses: actions/checkout@v2
