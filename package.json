@@ -10,7 +10,7 @@
     "prepare": "npm run clean && npm run build",
     "lint": "eslint -c eslint.json src/**/*.ts test/**/*.ts",
     "lint:fix": "eslint --fix -c eslint.json src/**/*.ts test/**/*.ts",
-    "test": "node -r ts-node/register/type-check ./test/*.test.ts"
+    "test": "node -r ts-node/register/type-check ./test/fixture.test.ts"
   },
   "files": [
     "bin",
