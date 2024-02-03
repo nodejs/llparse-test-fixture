@@ -47,11 +47,10 @@ jobs:
         run: npm install --ignore-scripts
 
       - name: Run tests
-        # run: npm run mocha
-        run: npx mocha -r ts-node/register/type-check test/*-test.ts
+        run: npm test
 
   lint:
-    name: Run TSLint
+    name: Run ESLint
     runs-on: ubuntu-latest
     steps:
       - name: Fetch code
@@ -70,5 +69,5 @@ jobs:
       - name: Install dependencies
         run: npm install --ignore-scripts
 
-      - name: Run lint command
+      - name: Run lint
         run: npm run lint

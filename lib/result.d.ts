@@ -1,4 +1,4 @@
-export declare type FixtureExpected = string | RegExp | ReadonlyArray<string | RegExp>;
+export type FixtureExpected = string | RegExp | ReadonlyArray<string | RegExp>;
 export interface IFixtureResultOptions {
     readonly noScan?: boolean;
     readonly scan?: number;
