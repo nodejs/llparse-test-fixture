@@ -148,11 +148,9 @@ void llparse__debug(llparse_t* s, const char* p, const char* endp,
 
 static int llparse__run_one(llparse_t* s, const char* input, int len) {
   int code;
-  const char* p;
   const char* endp;
   unsigned int paused;
 
-  p = input;
   endp = input + len;
 
   paused = 0;
