@@ -1,4 +1,4 @@
-import { format } from 'util';
+import { format } from 'node:util';
 
 export default (binding, inBench) => {
   // Just a random value, really

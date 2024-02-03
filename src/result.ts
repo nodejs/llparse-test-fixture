@@ -1,7 +1,6 @@
-import * as assert from 'assert';
-import { Buffer } from 'buffer';
-import { spawn } from 'child_process';
-import * as path from 'path';
+import * as assert from 'node:assert';
+import { spawn } from 'node:child_process';
+import * as path from 'node:path';
 
 export type FixtureExpected = string | RegExp | ReadonlyArray<string | RegExp>;
 
