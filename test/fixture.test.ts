@@ -1,17 +1,15 @@
-// Test for a test, huh?
-
+import { describe, beforeEach, it } from 'node:test';
+import * as path from 'node:path';
 import { LLParse } from 'llparse';
-import * as path from 'path';
 
 import { Fixture } from '../src/fixture';
 
 const TMP_DIR = path.join(__dirname, 'tmp');
 const EXTRA_CODE = path.join(__dirname, 'fixtures', 'extra.c');
 
-describe('llparse-test-fixture', function () {
-  const timeoutMS = (process.env.CI ? 60 : 10) * 1000;
-  this.timeout(timeoutMS);
+const timeoutMS = (process.env.CI ? 60 : 10) * 1000;
 
+describe('llparse-test-fixture', { timeout: timeoutMS }, function () {
   let fixture: Fixture;
   let p: LLParse;
 
