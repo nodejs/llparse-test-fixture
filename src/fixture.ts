@@ -50,7 +50,8 @@ export class Fixture {
       clang: options.clang === undefined ? CLANG : options.clang,
       extra: options.extra || [],
       maxParallel: options.maxParallel === undefined ?
-        os.cpus().length : options.maxParallel,
+        os.cpus().length :
+        options.maxParallel,
     };
 
     try {
@@ -129,7 +130,7 @@ export class Fixture {
 
   private async clang(args: ReadonlyArray<string>): Promise<void> {
     const proc = spawn(CLANG, args, {
-      stdio: [null, 'pipe', 'pipe'],
+      stdio: [ null, 'pipe', 'pipe' ],
     });
 
     const stdout: Buffer[] = [];
@@ -138,7 +139,7 @@ export class Fixture {
     proc.stderr.on('data', (chunk: Buffer) => stderr.push(chunk));
 
     const code = await (new Promise((resolve) => {
-      proc.once('exit', (exitCode) => resolve(exitCode!));
+      proc.once('exit', exitCode => resolve(exitCode!));
     }) as Promise<number>);
 
     if (code !== 0) {
@@ -149,9 +150,9 @@ export class Fixture {
         process.stderr.write(Buffer.concat(stderr).toString());
       }
 
-      const escapedArgs = args.map((arg) => JSON.stringify(arg));
+      const escapedArgs = args.map(arg => JSON.stringify(arg));
       throw new Error('clang exit code: ' + code +
-          `\narguments: ${escapedArgs.join(' ')}`);
+        `\narguments: ${escapedArgs.join(' ')}`);
     }
   }
 }

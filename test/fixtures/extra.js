@@ -1,5 +1,3 @@
-import { Buffer } from 'buffer';
-
 export default (binding, inBench) => {
   const nop = () => 0;
 

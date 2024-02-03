@@ -55,15 +55,13 @@ export class FixtureResult {
     }));
   }
 
-  private async spawn(range: IRange, input: string)
-    : Promise<ReadonlyArray<ISingleRun>> {
+  private async spawn(range: IRange, input: string): Promise<ReadonlyArray<ISingleRun>> {
     return await Promise.all(this.executables.map((executable) => {
       return this.spawnSingle(executable, range, input);
     }));
   }
 
-  private async spawnSingle(executable: string, range: IRange, input: string)
-    : Promise<ISingleRun> {
+  private async spawnSingle(executable: string, range: IRange, input: string): Promise<ISingleRun> {
     const name = path.basename(executable);
 
     const proc = spawn(executable, [
@@ -80,12 +78,12 @@ export class FixtureResult {
     proc.stderr.on('data', (chunk: Buffer) => stderr.push(chunk));
 
     const onEnd =
-      new Promise((resolve) => proc.stdout.once('end', () => resolve()));
+      new Promise<void>(resolve => proc.stdout.once('end', () => resolve()));
     const { code, signal } = await (new Promise((resolve) => {
       proc.once('exit', (exitCode, exitSignal) => {
         resolve({ code: exitCode!, signal: exitSignal! });
       });
-    }) as Promise<{ code: number, signal: string }>);
+    }) as Promise<{ code: number; signal: string }>);
 
     await onEnd;
 
@@ -105,7 +103,7 @@ export class FixtureResult {
 
     return {
       name,
-      outputs: out.map((part) => this.normalizeSpans(part)),
+      outputs: out.map(part => this.normalizeSpans(part)),
     };
   }
 
@@ -130,9 +128,9 @@ export class FixtureResult {
 
     assert(
       Array.isArray(expected) &&
-        expected.every((line) => {
-          return typeof line === 'string' || line instanceof RegExp;
-        }),
+      expected.every((line) => {
+        return typeof line === 'string' || line instanceof RegExp;
+      }),
       '`expected` must be a string, RegExp, or Array[String|RegExp]');
 
     const lines = actual.split('\n');
@@ -175,8 +173,8 @@ export class FixtureResult {
   private normalizeSpans(source: string): string {
     const lines = source.split(/\n/g);
 
-    type NormalizeItem = { type: 'raw', value: string } |
-      { type: 'span', off: number, len: number, span: string, value: string };
+    type NormalizeItem = { type: 'raw'; value: string } |
+      { type: 'span'; off: number; len: number; span: string; value: string };
     const parse = (line: string): NormalizeItem => {
       const match = line.match(
         /^off=(\d+)\s+len=(\d+)\s+span\[([^\]]+)\]="(.*)"$/);
@@ -193,7 +191,7 @@ export class FixtureResult {
       };
     };
 
-    const parsed = lines.filter((l) => l).map(parse);
+    const parsed = lines.filter(l => l).map(parse);
     const lastMap = new Map();
     const res: NormalizeItem[] = [];
 

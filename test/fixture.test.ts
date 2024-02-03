@@ -7,9 +7,8 @@ import { Fixture } from '../src/fixture';
 
 const TMP_DIR = path.join(__dirname, 'tmp');
 const EXTRA_CODE = path.join(__dirname, 'fixtures', 'extra.c');
-const EXTRA_JS = path.join(__dirname, 'fixtures', 'extra.js');
 
-describe('llparse-test-fixture', function() {
+describe('llparse-test-fixture', function () {
   const timeoutMS = (process.env.CI ? 60 : 10) * 1000;
   this.timeout(timeoutMS);
 
@@ -68,7 +67,7 @@ describe('llparse-test-fixture', function() {
     await build.check(
       'abbbaabba',
       'off=1 len=3 span[span]="bbb"\n' +
-        'off=6 len=2 span[span]="bb"\n');
+      'off=6 len=2 span[span]="bb"\n');
   });
 
   it('should print lf spans', async () => {

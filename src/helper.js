@@ -1,7 +1,5 @@
 #!/usr/bin/env node
-import { Buffer } from 'buffer';
-import * as fs from 'fs';
-import * as path from 'path';
+import * as path from 'node:path';
 
 import * as yargs from 'yargs';
 
