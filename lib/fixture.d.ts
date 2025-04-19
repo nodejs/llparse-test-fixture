@@ -3,6 +3,7 @@ export { FixtureResult, IFixtureResultOptions };
 export interface IFixtureOptions {
     readonly buildDir: string;
     readonly clang?: string;
+    readonly wasm?: string;
     readonly extra?: ReadonlyArray<string>;
     readonly maxParallel?: number;
 }

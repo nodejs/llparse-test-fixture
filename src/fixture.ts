@@ -10,6 +10,8 @@ export { FixtureResult, IFixtureResultOptions };
 
 const CLANG = process.env.CLANG || 'clang';
 const CFLAGS = process.env.CFLAGS || '';
+const WASM = process.env.WASM;
+const WASM_CFLAGS = process.env.WASM_CFLAGS || '';
 
 const NATIVE_DIR = path.join(__dirname, '..', 'src', 'native');
 const FIXTURE = path.join(NATIVE_DIR, 'fixture.c');
@@ -17,6 +19,7 @@ const FIXTURE = path.join(NATIVE_DIR, 'fixture.c');
 export interface IFixtureOptions {
   readonly buildDir: string;
   readonly clang?: string;
+  readonly wasm?: string;
   readonly extra?: ReadonlyArray<string>;
   readonly maxParallel?: number;
 }
@@ -33,6 +36,7 @@ export interface IFixtureArtifacts {
 interface IFixtureInternalOptions {
   readonly buildDir: string;
   readonly clang: string;
+  readonly wasm: string | undefined;
   readonly extra: ReadonlyArray<string>;
   readonly maxParallel: number;
 }
@@ -47,6 +51,7 @@ export class Fixture {
     this.options = {
       buildDir: options.buildDir,
       clang: options.clang === undefined ? CLANG : options.clang,
+      wasm: options.wasm === undefined ? WASM : options.wasm,
       extra: options.extra || [],
       maxParallel: options.maxParallel === undefined ?
         os.cpus().length :
@@ -76,25 +81,44 @@ export class Fixture {
     const commonArgs = [
       '-g3', '-Os', '-fvisibility=hidden',
       '-I', NATIVE_DIR,
+      '-I', BUILD_DIR,
       '-include', header,
       FIXTURE,
     ];
 
+    const args = {
+      c: [ '-msse4.2' ],
+      wasm: [
+        '-msimd128',
+        '-fno-exceptions',
+        '-mexec-model=reactor',
+        '-Wl,-error-limit=0',
+        '-Wl,--allow-undefined',
+        '-Wl,--export-dynamic',
+        '-Wl,--export-table',
+        '-Wl,--export=malloc',
+        '-Wl,--export=free',
+        '-Wl,--no-entry',
+      ],
+    };
+
     // This is rather lame, but should work
     if (CFLAGS) {
       for (const flag of CFLAGS.split(/\s+/g)) {
-        commonArgs.push(flag);
+        args.c.push(flag);
       }
     }
-
-    const args = {
-      c: [ '-I', BUILD_DIR ],
-    };
+    if (WASM_CFLAGS) {
+      for (const flag of WASM_CFLAGS.split(/\s+/g)) {
+        args.wasm.push(flag);
+      }
+    }
 
     hash.update('c');
     hash.update(artifacts.c);
     await fs.promises.writeFile(c, artifacts.c);
     args.c.push(c);
+    args.wasm.push(c);
 
     for (const extra of this.options.extra) {
       commonArgs.push(extra);
@@ -111,24 +135,43 @@ export class Fixture {
 
     const executables: string[] = [];
 
-    const out = path.join(BUILD_DIR, name + '-c.' + digest);
-    const link = path.join(BUILD_DIR, name + '-c');
-    if (!fs.existsSync(out)) {
-      await this.clang(commonArgs.concat(args.c, '-o', out));
+    {
+      const out = path.join(BUILD_DIR, name + '-c.' + digest);
+      const link = path.join(BUILD_DIR, name + '-c');
+      if (!fs.existsSync(out)) {
+        await this.clang(
+          this.options.clang, commonArgs.concat(args.c, '-o', out));
+      }
+      try {
+        await fs.promises.unlink(link);
+      } catch (e) {
+        // no-op
+      }
+      await fs.promises.link(out, link);
+      executables.push(out);
     }
-    try {
-      await fs.promises.unlink(link);
-    } catch (e) {
-      // no-op
+
+    if (this.options.wasm) {
+      const out = path.join(BUILD_DIR, name + '-' + digest + '.wasm');
+      const link = path.join(BUILD_DIR, name + '.wasm');
+      if (!fs.existsSync(out)) {
+        await this.clang(
+          this.options.wasm, commonArgs.concat(args.wasm, '-o', out));
+      }
+      try {
+        await fs.promises.unlink(link);
+      } catch (e) {
+        // no-op
+      }
+      await fs.promises.link(out, link);
+      executables.push(out);
     }
-    await fs.promises.link(out, link);
-    executables.push(out);
 
     return new FixtureResult(executables, this.options.maxParallel);
   }
 
-  private async clang(args: ReadonlyArray<string>): Promise<void> {
-    const proc = spawn(CLANG, args, {
+  private async clang(bin: string, args: ReadonlyArray<string>): Promise<void> {
+    const proc = spawn(bin, args, {
       stdio: [ null, 'pipe', 'pipe' ],
     });
 

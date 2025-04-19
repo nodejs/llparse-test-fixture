@@ -4,6 +4,8 @@ import * as path from 'node:path';
 
 export type FixtureExpected = string | RegExp | ReadonlyArray<string | RegExp>;
 
+const WASM_RUNNER = path.join(__dirname, '..', 'src', 'wasm-runner.js');
+
 interface IRange {
   readonly from: number;
   readonly to: number;
@@ -63,10 +65,19 @@ export class FixtureResult {
   private async spawnSingle(executable: string, range: IRange, input: string): Promise<ISingleRun> {
     const name = path.basename(executable);
 
-    const proc = spawn(executable, [
+    let bin = executable;
+    const args = [
       `${range.from}:${range.to}`,
       input,
-    ], {
+    ];
+
+    if (executable.endsWith('.wasm')) {
+      bin = process.execPath;
+      args.unshift(executable);
+      args.unshift(WASM_RUNNER);
+    }
+
+    const proc = spawn(bin, args, {
       shell: process.platform === 'win32',
       stdio: [ null, 'pipe', 'pipe' ],
     });
