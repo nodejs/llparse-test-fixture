@@ -7,7 +7,34 @@
 
 #include "fixture.h"
 
-#if defined(_MSC_VER)
+#if defined(__wasm__)
+  extern double wasm_get_time();
+  extern void wasm_print(int stream, const char* str);
+
+  static int wasm__stdout = 0;
+  static int wasm__stderr = 1;
+
+  static double get_time() {
+    return wasm_get_time();
+  }
+
+  static void wasm__printf(int stream, const char* fmt, ...) {
+    va_list ap;
+    char buf[16384];
+
+    if (llparse__in_bench)
+      return;
+
+    va_start(ap, fmt);
+    vsnprintf(buf, sizeof(buf), fmt, ap);
+    va_end(ap);
+
+    wasm_print(stream, buf);
+  }
+
+  #define fprintf(stream, ...) wasm__printf(wasm__##stream, __VA_ARGS__)
+
+#elif defined(_MSC_VER)
   #if defined(_MSC_EXTENSIONS)
     #define DELTA_EPOCH_IN_MICROSECS  11644473600000000Ui64
   #else
@@ -16,10 +43,7 @@
 
   #include <windows.h>
 
-  static int gettimeofday(struct timeval* tv, void* tz) {
-    assert(tv != NULL);
-    assert(tz == NULL);
-
+  static double get_time() {
     FILETIME ft;
     unsigned __int64 tmpres = 0;
 
@@ -32,13 +56,18 @@
     tmpres /= 10;  /*convert into microseconds*/
     /*converting file time to unix epoch*/
     tmpres -= DELTA_EPOCH_IN_MICROSECS;
-    tv->tv_sec = (long)(tmpres / 1000000UL);
-    tv->tv_usec = (long)(tmpres % 1000000UL);
 
-    return 0;
+    return (double) tmpres / 1e6;
   }
 #else
   #include <sys/time.h>
+
+  static double get_time() {
+    struct timeval tv;
+    gettimeofday(&tv, NULL);
+
+    return (double) tv.tv_sec + tv.tv_usec * 1e-6;
+  }
 #endif /* defined(_MSC_VER) */
 
 #ifdef LLPARSE__TEST_INIT
@@ -215,8 +244,8 @@ static int llparse__run_loop(const char* input, int len) {
 static int llparse__run_bench(const char* input, int len) {
   llparse_t s;
   int64_t i;
-  struct timeval start;
-  struct timeval end;
+  double start;
+  double end;
   double bw;
   double time;
   double total;
@@ -229,7 +258,7 @@ static int llparse__run_bench(const char* input, int len) {
 
   iterations = kBytes / (int64_t) len;
 
-  gettimeofday(&start, NULL);
+  start = get_time();
   for (i = 0; i < iterations; i++) {
     int code;
 
@@ -237,14 +266,13 @@ static int llparse__run_bench(const char* input, int len) {
     if (code != 0)
       return code;
   }
-  gettimeofday(&end, NULL);
+  end = get_time();
 
 #ifdef LLPARSE__TEST_FINISH
   LLPARSE__TEST_FINISH(&s);
 #endif  /* LLPARSE__TEST_FINISH */
 
-  time = (end.tv_sec - start.tv_sec);
-  time += (double) (end.tv_usec - start.tv_usec) * 1e-6;
+  time = end - start;
   total = (double) iterations * len;
   bw = (double) total / time;
 
@@ -294,6 +322,7 @@ static int llparse__run_scan(int scan, const char* input, int len) {
 }
 
 
+#if !defined(__wasm__)
 static int llparse__run_stdin() {
   llparse_t s;
 
@@ -325,19 +354,24 @@ static int llparse__run_stdin() {
 
   return 0;
 }
+#endif /* !defined(__wasm__) */
 
 
-static int llparse__print_usage(char** argv) {
+static int llparse__print_usage(const char* exec) {
   fprintf(stderr, "Usage:\n");
-  fprintf(stderr, "  %s <from>:to [input]\n", argv[0]);
-  fprintf(stderr, "  %s bench [input]\n", argv[0]);
-  fprintf(stderr, "  %s -\n", argv[0]);
+  fprintf(stderr, "  %s <from>:to [input]\n", exec);
+  fprintf(stderr, "  %s bench [input]\n", exec);
+#if !defined(__wasm__)
+  fprintf(stderr, "  %s -\n", exec);
+#endif  /* !defined(__wasm__) */
   return -1;
 }
 
 
-int main(int argc, char** argv) {
-  const char* input;
+#if defined(__wasm__)
+__attribute__((visibility("default")))
+#endif /* !defined(__wasm__) */
+int run(const char* exec, const char* spec, const char* input) {
   int len;
   struct {
     int from;
@@ -345,35 +379,47 @@ int main(int argc, char** argv) {
   } scan;
   int i;
 
-  if (argc >= 2 && strcmp(argv[1], "-") == 0)
-    return llparse__run_stdin();
-
-  if (argc < 3)
-    return llparse__print_usage(argv);
-
-  if (strcmp(argv[1], "bench") == 0) {
+  if (strcmp(spec, "bench") == 0) {
     llparse__in_bench = 1;
-  } else if (strcmp(argv[1], "loop") == 0) {
+  } else if (strcmp(spec, "loop") == 0) {
     llparse__in_bench = 1;
     llparse__in_loop = 1;
   } else {
     const char* colon;
-    char* endptr;
+    const char* p;
 
-    colon = strchr(argv[1], ':');
+    p = spec;
+    colon = strchr(p, ':');
     if (colon == NULL)
-      return llparse__print_usage(argv);
+      return llparse__print_usage(exec);
 
-    scan.from = (int) strtol(argv[1], &endptr, 10);
-    if (endptr != colon)
-      return llparse__print_usage(argv);
+    scan.from = 0;
+    scan.to = 0;
 
-    scan.to = (int) strtol(colon + 1, &endptr, 10);
-    if (endptr != argv[1] + strlen(argv[1]))
-      return llparse__print_usage(argv);
+    while (p < colon) {
+      char ch = *p;
+      if (ch < '0' || ch > '9') {
+        return llparse__print_usage(exec);
+      }
+      scan.from *= 10;
+      scan.from += ch - '0';
+      p++;
+    }
+    p++;
+    while (1) {
+      char ch = *p;
+      if (ch == 0) {
+        break;
+      }
+      if (ch < '0' || ch > '9') {
+        return llparse__print_usage(exec);
+      }
+      scan.to *= 10;
+      scan.to += ch - '0';
+      p++;
+    }
   }
 
-  input = argv[2];
   len = strlen(input);
 
   if (llparse__in_bench && len == 0) {
@@ -400,3 +446,15 @@ int main(int argc, char** argv) {
 
   return 0;
 }
+
+#if !defined(__wasm__)
+int main(int argc, char** argv) {
+  if (argc >= 2 && strcmp(argv[1], "-") == 0)
+    return llparse__run_stdin();
+
+  if (argc < 3)
+    return llparse__print_usage(argv[0]);
+
+  return run(argv[0], argv[1], argv[2]);
+}
+#endif /* !defined(__wasm__) */

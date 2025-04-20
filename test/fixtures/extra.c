@@ -1,7 +1,8 @@
 #include "fixture.h"
 
-void llparse__print_off(llparse_t* s, const char* p, const char* endp) {
+int llparse__print_off(llparse_t* s, const char* p, const char* endp) {
   llparse__print(p, endp, "");
+  return 0;
 }
 
 

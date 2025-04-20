@@ -29,13 +29,13 @@ jobs:
           echo "C:\Users\runneradmin\scoop\shims" >> $Env:GITHUB_PATH
 
       - name: Fetch code
-        uses: actions/checkout@v2
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
         with:
           fetch-depth: 1
 
       # Skip macOS & Windows, cache there is slower
       - name: Restore node_modules cache for Linux
-        uses: actions/cache@v1
+        uses: actions/cache@d4323d4df104b026a6aa633fdb11d772146be0bf # v4
         if: runner.os == 'Linux'
         with:
           path: ~/.npm
@@ -54,12 +54,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Fetch code
-        uses: actions/checkout@v2
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
         with:
           fetch-depth: 1
 
       - name: Restore node_modules cache
-        uses: actions/cache@v1
+        uses: actions/cache@d4323d4df104b026a6aa633fdb11d772146be0bf # v4
         with:
           path: ~/.npm
           key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
